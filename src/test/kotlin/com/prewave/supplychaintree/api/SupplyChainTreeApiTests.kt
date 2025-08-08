@@ -14,9 +14,8 @@ import org.springframework.http.HttpStatus
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Import(TestcontainersConfiguration::class)
-@Disabled //TODO Enable and extend when implemented
 class SupplyChainTreeApiTests(
-    @param:Autowired val rest: TestRestTemplate
+    @param:Autowired val rest: TestRestTemplate,
 ) {
 
     @Test
@@ -26,12 +25,22 @@ class SupplyChainTreeApiTests(
     }
 
     @Test
+    fun `should not create duplicate edge`() {
+        rest.postForEntity("/api/edge/from/1/to/3", null, Any::class.java)
+
+        val entity = rest.postForEntity("/api/edge/from/1/to/3", null, Any::class.java)
+        assertThat(entity.statusCode).isEqualTo(HttpStatus.CONFLICT)
+    }
+
+    @Test
+    @Disabled //TODO Enable and extend when implemented
     fun `should delete edge`() {
         val entity = rest.exchange("/api/edge/from/1/to/2", HttpMethod.DELETE, null, Any::class.java)
         assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
     }
 
     @Test
+    @Disabled //TODO Enable and extend when implemented
     fun `should get tree`() {
         val entity = rest.getForEntity("/api/tree/from/1", Any::class.java)
         assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)

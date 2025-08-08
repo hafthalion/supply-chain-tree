@@ -1,1 +1,17 @@
-databaseChangeLog: []
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: Jaroslav Abraham
+      changes:
+        - createTable:
+            tableName: edge
+            columns:
+              - column:
+                  name: from_id
+                  type: int
+              - column:
+                  name: to_id
+                  type: int
+        - addPrimaryKey:
+            tableName: edge
+            columnNames: from_id, to_id
