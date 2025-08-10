@@ -1,6 +1,7 @@
 package com.prewave.supplychaintree.api
 
 import com.prewave.supplychaintree.TestcontainersConfiguration
+import com.prewave.supplychaintree.repository.SupplyChainTreeRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -16,20 +17,25 @@ import org.springframework.http.HttpStatus
 @Import(TestcontainersConfiguration::class)
 class SupplyChainTreeApiTests(
     @param:Autowired val rest: TestRestTemplate,
+    @param:Autowired val repository: SupplyChainTreeRepository,
 ) {
 
     @Test
-    fun `should create edge`() {
+    fun `should create new edge`() {
         val entity = rest.postForEntity("/api/edge/from/1/to/2", null, Any::class.java)
+
         assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
+        assertThat(repository.fetchDirectEdges(1)).hasSize(1)
     }
 
     @Test
     fun `should not create duplicate edge`() {
-        rest.postForEntity("/api/edge/from/1/to/3", null, Any::class.java)
+        rest.postForEntity("/api/edge/from/10/to/20", null, Any::class.java)
 
-        val entity = rest.postForEntity("/api/edge/from/1/to/3", null, Any::class.java)
+        val entity = rest.postForEntity("/api/edge/from/10/to/20", null, Any::class.java)
+
         assertThat(entity.statusCode).isEqualTo(HttpStatus.CONFLICT)
+        assertThat(repository.fetchDirectEdges(10)).hasSize(1)
     }
 
     @Test
