@@ -5,6 +5,6 @@ import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.ProblemDetail
 import org.springframework.web.ErrorResponseException
 
-class DuplicateEdgeException(fromId: Int, toId: Int, cause: DuplicateKeyException) : ErrorResponseException(
-    CONFLICT, ProblemDetail.forStatusAndDetail(CONFLICT, "Tree edge from $fromId to $toId already present"), cause
+class EdgeAlreadyExistsException(fromId: Int, toId: Int, cause: DuplicateKeyException) : ErrorResponseException(
+    CONFLICT, ProblemDetail.forStatusAndDetail(CONFLICT, "Tree edge from $fromId to $toId already exists"), cause
 )

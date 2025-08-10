@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.*
 
-@OpenAPIDefinition(info = Info(title = "SupplyChainTree", version = "1.0"))
+@OpenAPIDefinition(info = Info(title = "Supply chain tree API", version = "1.0", summary = "A simple API to manage supply chain tree structure"))
 @RestController
 @RequestMapping("/api")
 class SupplyChainTreeApi(
@@ -29,10 +29,16 @@ class SupplyChainTreeApi(
         repository.createEdge(fromNodeId, toNodeId)
     }
 
+    @Operation(summary = "Delete an existing supply chain tree edge")
+    @ApiResponse(responseCode = "200", description = "Successfully deleted the tree edge")
+    @ApiResponse(responseCode = "404", description = "The tree edge does not exist")
     @DeleteMapping("/edge/from/{fromNodeId}/to/{toNodeId}")
-    fun deleteEdge(@PathVariable fromNodeId: Int, @PathVariable toNodeId: Int) {
+    fun deleteEdge(
+        @PathVariable fromNodeId: Int,
+        @PathVariable toNodeId: Int,
+    ) {
         logger.info("Delete edge from $fromNodeId to $toNodeId")
-        TODO()
+        repository.deleteEdge(fromNodeId, toNodeId)
     }
 
     @GetMapping("/tree/from/{fromNodeId}")

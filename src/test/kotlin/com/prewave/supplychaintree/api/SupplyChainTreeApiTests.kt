@@ -22,27 +22,35 @@ class SupplyChainTreeApiTests(
 
     @Test
     fun `should create new edge`() {
-        val entity = rest.postForEntity("/api/edge/from/1/to/2", null, Any::class.java)
+        val entity = rest.postForEntity("/api/edge/from/10/to/11", null, Any::class.java)
 
         assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(repository.fetchDirectEdges(1)).hasSize(1)
-    }
-
-    @Test
-    fun `should not create duplicate edge`() {
-        rest.postForEntity("/api/edge/from/10/to/20", null, Any::class.java)
-
-        val entity = rest.postForEntity("/api/edge/from/10/to/20", null, Any::class.java)
-
-        assertThat(entity.statusCode).isEqualTo(HttpStatus.CONFLICT)
         assertThat(repository.fetchDirectEdges(10)).hasSize(1)
     }
 
     @Test
-    @Disabled //TODO Enable and extend when implemented
-    fun `should delete edge`() {
-        val entity = rest.exchange("/api/edge/from/1/to/2", HttpMethod.DELETE, null, Any::class.java)
+    fun `should not create duplicate edge`() {
+        rest.postForEntity("/api/edge/from/20/to/21", null, Any::class.java)
+
+        val entity = rest.postForEntity("/api/edge/from/20/to/21", null, Any::class.java)
+
+        assertThat(entity.statusCode).isEqualTo(HttpStatus.CONFLICT)
+        assertThat(repository.fetchDirectEdges(20)).hasSize(1)
+    }
+
+    @Test
+    fun `should delete existing edge`() {
+        rest.postForEntity("/api/edge/from/30/to/31", null, Any::class.java)
+
+        val entity = rest.exchange("/api/edge/from/30/to/31", HttpMethod.DELETE, null, Any::class.java)
         assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
+        assertThat(repository.fetchDirectEdges(30)).isEmpty()
+    }
+
+    @Test
+    fun `should fail when deleting missing edge`() {
+        val entity = rest.exchange("/api/edge/from/30/to/32", HttpMethod.DELETE, null, Any::class.java)
+        assertThat(entity.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
     }
 
     @Test

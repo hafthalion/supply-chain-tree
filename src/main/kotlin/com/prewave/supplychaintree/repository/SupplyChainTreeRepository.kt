@@ -1,6 +1,7 @@
 package com.prewave.supplychaintree.repository
 
-import com.prewave.supplychaintree.exception.DuplicateEdgeException
+import com.prewave.supplychaintree.exception.EdgeAlreadyExistsException
+import com.prewave.supplychaintree.exception.EdgeNotFoundException
 import org.jooq.DSLContext
 import org.jooq.Record
 import org.jooq.Result
@@ -14,18 +15,29 @@ import org.springframework.stereotype.Repository
 class SupplyChainTreeRepository(
     private val dsl: DSLContext,
 ) {
-    fun createEdge(fromId: Int, toId: Int) {
+    fun createEdge(fromNodeId: Int, toNodeId: Int) {
         try {
             dsl.insertInto(table("edge"))
-                .set(field("from_id"), fromId)
-                .set(field("to_id"), toId)
+                .set(field("from_id"), fromNodeId)
+                .set(field("to_id"), toNodeId)
                 .execute()
         } catch (e: DuplicateKeyException) {
-            throw DuplicateEdgeException(fromId, toId, e)
+            throw EdgeAlreadyExistsException(fromNodeId, toNodeId, e)
         }
     }
 
-    fun fetchDirectEdges(fromId: Int): Result<Record?> =
-        dsl.select().from("edge").where(field("from_id").eq(fromId)).fetch()
+    fun deleteEdge(fromNodeId: Int, toNodeId: Int) {
+        val deletedRows = dsl.deleteFrom(table("edge"))
+            .where(
+                field("from_id").eq(fromNodeId)
+                    .and(field("to_id").eq(toNodeId))
+            ).execute()
 
+        if (deletedRows == 0) {
+            throw EdgeNotFoundException(fromNodeId, toNodeId)
+        }
+    }
+
+    fun fetchDirectEdges(fromNodeId: Int): Result<Record?> =
+        dsl.select().from("edge").where(field("from_id").eq(fromNodeId)).fetch()
 }
