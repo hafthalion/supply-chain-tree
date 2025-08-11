@@ -10,8 +10,15 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.*
 import java.util.stream.Stream
+import kotlin.streams.asStream
 
-@OpenAPIDefinition(info = Info(title = "Supply chain tree API", version = "1.0", summary = "A simple API to manage supply chain tree structure"))
+@OpenAPIDefinition(
+    info = Info(
+        title = "Supply chain tree API",
+        version = "1.0",
+        summary = "A simple API to manage supply chain tree structure"
+    )
+)
 @Tag(name = "Supply chain tree API")
 @RestController
 @RequestMapping("/api")
@@ -44,13 +51,37 @@ class SupplyChainTreeApi(
         repository.deleteEdge(fromNodeId, toNodeId)
     }
 
-    @Operation(summary = "Fetch the whole supply chain tree")
+    @Operation(summary = "Fetch the whole supply chain tree hierarchy")
     @ApiResponse(responseCode = "200", description = "Successfully fetched the tree hierarchy")
     @ApiResponse(responseCode = "404", description = "The tree with that starting node does not exist")
     @GetMapping("/tree/from/{fromNodeId}")
     fun fetchTree(@PathVariable fromNodeId: Int): Stream<String> {
         logger.info("Get tree from $fromNodeId")
-        return repository.fetchReachableEdges(fromNodeId)
-            .map { "${it.getValue("from_id")}->${it.getValue("to_id")}" }
+
+        val linearEdges: Iterator<Pair<Int, Int>> = repository.fetchReachableEdges(fromNodeId).iterator()
+
+        val foldedEdges = sequence<Pair<Int, List<Int>>> {
+            if (linearEdges.hasNext()) {
+                var e = linearEdges.next()
+                var fromNodeId = e.first
+                var toNodeIds = mutableListOf(e.second)
+
+                while (linearEdges.hasNext()) {
+                    e = linearEdges.next()
+
+                    if (e.first == fromNodeId) {
+                        toNodeIds.add(e.second)
+                    } else {
+                        yield(fromNodeId to toNodeIds)
+                        fromNodeId = e.first
+                        toNodeIds = mutableListOf(e.second)
+                    }
+                }
+
+                yield(fromNodeId to toNodeIds)
+            }
+        }
+
+        return foldedEdges.map { "${it.first}>${it.second.joinToString(",")}" }.asStream()
     }
 }

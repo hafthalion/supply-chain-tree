@@ -4,7 +4,6 @@ import com.prewave.supplychaintree.exception.EdgeAlreadyExistsException
 import com.prewave.supplychaintree.exception.EdgeNotFoundException
 import com.prewave.supplychaintree.exception.TreeNotFoundException
 import org.jooq.DSLContext
-import org.jooq.Record
 import org.jooq.impl.DSL.*
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Repository
@@ -54,7 +53,7 @@ class SupplyChainTreeRepository(
     SELECT from_id, to_id
     FROM rq;
      */
-    fun fetchReachableEdges(fromNodeId: Int): Stream<Record> {
+    fun fetchReachableEdges(fromNodeId: Int): Stream<Pair<Int, Int>> {
         if (!hasDirectEdges(fromNodeId)) {
             throw TreeNotFoundException(fromNodeId)
         }
@@ -75,6 +74,7 @@ class SupplyChainTreeRepository(
             .from(name("rq"))
             .fetchSize(batchSize)
             .fetchStream()
+            .map { it.getValue(0, Int::class.java) to it.getValue(1, Int::class.java) }
     }
 
     fun hasDirectEdges(fromNodeId: Int): Boolean =
