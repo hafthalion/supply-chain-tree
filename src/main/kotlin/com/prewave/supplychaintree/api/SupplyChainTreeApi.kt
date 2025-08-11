@@ -45,11 +45,12 @@ class SupplyChainTreeApi(
     }
 
     @Operation(summary = "Fetch the whole supply chain tree")
-    @ApiResponse(responseCode = "200", description = "Successfully fetched the tree")
+    @ApiResponse(responseCode = "200", description = "Successfully fetched the tree hierarchy")
+    @ApiResponse(responseCode = "404", description = "The tree with that starting node does not exist")
     @GetMapping("/tree/from/{fromNodeId}")
     fun fetchTree(@PathVariable fromNodeId: Int): Stream<String> {
         logger.info("Get tree from $fromNodeId")
-        return repository.fetchEdges(fromNodeId)
+        return repository.fetchReachableEdges(fromNodeId)
             .map { "${it.getValue("from_id")}->${it.getValue("to_id")}" }
     }
 }

@@ -2,12 +2,10 @@ package com.prewave.supplychaintree.repository
 
 import com.prewave.supplychaintree.exception.EdgeAlreadyExistsException
 import com.prewave.supplychaintree.exception.EdgeNotFoundException
+import com.prewave.supplychaintree.exception.TreeNotFoundException
 import org.jooq.DSLContext
 import org.jooq.Record
-import org.jooq.impl.DSL.field
-import org.jooq.impl.DSL.name
-import org.jooq.impl.DSL.select
-import org.jooq.impl.DSL.table
+import org.jooq.impl.DSL.*
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Repository
 import java.util.stream.Stream
@@ -44,9 +42,6 @@ class SupplyChainTreeRepository(
         }
     }
 
-    fun fetchEdges(): Stream<Record> =
-        dsl.select().from(table("edge")).fetchSize(batchSize).fetchStream()
-
     /**
     WITH RECURSIVE rq(from_id, to_id) AS (
         SELECT from_id, to_id
@@ -59,8 +54,12 @@ class SupplyChainTreeRepository(
     SELECT from_id, to_id
     FROM rq;
      */
-    fun fetchEdges(fromNodeId: Int): Stream<Record> {
-        return dsl.withRecursive(name("cte"), name("from_id"), name("to_id"))
+    fun fetchReachableEdges(fromNodeId: Int): Stream<Record> {
+        if (!hasDirectEdges(fromNodeId)) {
+            throw TreeNotFoundException(fromNodeId)
+        }
+
+        return dsl.withRecursive(name("rq"), name("from_id"), name("to_id"))
             .`as`(
                 select(field("from_id"), field("to_id"))
                     .from(table("edge"))
@@ -78,12 +77,18 @@ class SupplyChainTreeRepository(
             .fetchStream()
     }
 
-    fun createLargeTree(fromNodeId: Int, size: Int, arity: Int = log10(size.toDouble()).toInt()) {
+    fun hasDirectEdges(fromNodeId: Int): Boolean =
+        dsl.fetchExists(select()
+            .from(table("edge"))
+            .where(field(name("from_id")).eq(fromNodeId))
+        )
+
+    fun createLargeTree(fromNodeId: Int, size: Int, arity: Int? = null) {
         val insert = dsl.insertInto(table("edge"))
             .columns(field("from_id"), field("to_id"))
             .values(0, 0) // param placeholders
 
-        generateTreeSequence(fromNodeId, size, arity)
+        generateTreeSequence(fromNodeId, size, arity ?: log10(size.toDouble()).toInt())
             .chunked(batchSize)
             .forEach { chunk ->
                 val batch = dsl.batch(insert)

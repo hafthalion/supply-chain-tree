@@ -24,7 +24,7 @@ class SupplyChainTreeApiTests(
         val entity = rest.postForEntity("/api/edge/from/10/to/11", null, Any::class.java)
 
         assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(repository.fetchEdges(10)).hasSize(1)
+        assertThat(repository.fetchReachableEdges(10)).hasSize(1)
     }
 
     @Test
@@ -34,7 +34,7 @@ class SupplyChainTreeApiTests(
         val entity = rest.postForEntity("/api/edge/from/20/to/21", null, Any::class.java)
 
         assertThat(entity.statusCode).isEqualTo(HttpStatus.CONFLICT)
-        assertThat(repository.fetchEdges(20)).hasSize(1)
+        assertThat(repository.fetchReachableEdges(20)).hasSize(1)
     }
 
     @Test
@@ -44,7 +44,7 @@ class SupplyChainTreeApiTests(
         val entity = rest.exchange("/api/edge/from/30/to/31", HttpMethod.DELETE, null, Any::class.java)
 
         assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(repository.fetchEdges(30)).isEmpty()
+        assertThat(repository.fetchReachableEdges(30)).isEmpty()
     }
 
     @Test
