@@ -27,7 +27,7 @@ class SupplyChainTreeApiPerformanceTests(
         @BeforeAll
         @JvmStatic
         fun createLargeTree(@Autowired repository: SupplyChainTreeRepository) {
-            val duration = measureTime { repository.createLargeTestTree(100, 1_000_000) }
+            val duration = measureTime { repository.createLargeTree(100, 1_000_000) }
 
             println("Setup duration: " + duration.toString(DurationUnit.SECONDS, 2))
         }

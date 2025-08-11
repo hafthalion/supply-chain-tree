@@ -24,6 +24,6 @@ class SupplyChainTreeTestApi(
         @Parameter size: Int,
     ) {
         logger.info("Create large test tree from $fromNodeId of size $size")
-        repository.createLargeTestTree(fromNodeId, size)
+        repository.createLargeTree(fromNodeId, size)
     }
 }

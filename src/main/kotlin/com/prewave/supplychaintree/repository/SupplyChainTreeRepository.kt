@@ -5,6 +5,8 @@ import com.prewave.supplychaintree.exception.EdgeNotFoundException
 import org.jooq.DSLContext
 import org.jooq.Record
 import org.jooq.impl.DSL.field
+import org.jooq.impl.DSL.name
+import org.jooq.impl.DSL.select
 import org.jooq.impl.DSL.table
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Repository
@@ -45,11 +47,38 @@ class SupplyChainTreeRepository(
     fun fetchEdges(): Stream<Record> =
         dsl.select().from(table("edge")).fetchSize(batchSize).fetchStream()
 
-    fun fetchEdges(fromNodeId: Int): Stream<Record> =
-        dsl.select().from("edge").where(field("from_id").eq(fromNodeId))
-            .fetchSize(batchSize).fetchStream()
+    /**
+    WITH RECURSIVE rq(from_id, to_id) AS (
+        SELECT from_id, to_id
+        FROM edge e
+        WHERE from_id = 100000
+        UNION ALL
+        SELECT e.from_id, e.to_id
+        FROM rq INNER JOIN edge e ON rq.to_id = e.from_id
+    )
+    SELECT from_id, to_id
+    FROM rq;
+     */
+    fun fetchEdges(fromNodeId: Int): Stream<Record> {
+        return dsl.withRecursive(name("cte"), name("from_id"), name("to_id"))
+            .`as`(
+                select(field("from_id"), field("to_id"))
+                    .from(table("edge"))
+                    .where(field("from_id").eq(fromNodeId))
+                    .unionAll(
+                        select(field(name("e", "from_id")), field(name("e", "to_id")))
+                            .from(name("rq"))
+                            .join(table("edge").`as`("e"))
+                            .on(field(name("rq", "to_id")).eq(field(name("e", "from_id"))))
+                    )
+            )
+            .select()
+            .from(name("rq"))
+            .fetchSize(batchSize)
+            .fetchStream()
+    }
 
-    fun createLargeTestTree(fromNodeId: Int, size: Int, arity: Int = log10(size.toDouble()).toInt()) {
+    fun createLargeTree(fromNodeId: Int, size: Int, arity: Int = log10(size.toDouble()).toInt()) {
         val insert = dsl.insertInto(table("edge"))
             .columns(field("from_id"), field("to_id"))
             .values(0, 0) // param placeholders
@@ -67,12 +96,12 @@ class SupplyChainTreeRepository(
         val nodeIdQueue = ArrayDeque<Int>(size).apply { add(fromNodeId) }
         var toNodeId = fromNodeId + 1
 
-        while (nodeIdQueue.isNotEmpty()) {
+        while (true) {
             val fromNodeId = nodeIdQueue.removeFirst()
 
             repeat(arity) {
-                nodeIdQueue.addLast(toNodeId) // add current nodeId to the queue to generate its child nodes later
-                yield(fromNodeId to toNodeId++) // yield node immediately when created
+                yield(fromNodeId to toNodeId) // yield node immediately when created
+                nodeIdQueue.addLast(toNodeId++) // add current nodeId to the queue to generate its child nodes later
             }
         }
     }.take(size)
