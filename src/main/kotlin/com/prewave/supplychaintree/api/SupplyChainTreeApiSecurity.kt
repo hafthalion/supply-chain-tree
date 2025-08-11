@@ -19,6 +19,7 @@ class SupplyChainTreeApiSecurity {
         http {
             authorizeHttpRequests {
                 authorize("/api/ **", permitAll)
+                authorize("/test/ **", permitAll)
                 authorize("/swagger-ui/ **", permitAll)
                 authorize("/v3/api-docs/ **", permitAll)
                 authorize(anyRequest, denyAll)
