@@ -4,17 +4,20 @@ import com.prewave.supplychaintree.exception.EdgeAlreadyExistsException
 import com.prewave.supplychaintree.exception.EdgeNotFoundException
 import org.jooq.DSLContext
 import org.jooq.Record
-import org.jooq.Result
 import org.jooq.impl.DSL.field
 import org.jooq.impl.DSL.table
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Repository
+import java.util.stream.Stream
+
 
 //TODO Use jooq generator for type-safe access
 @Repository
 class SupplyChainTreeRepository(
     private val dsl: DSLContext,
 ) {
+    private val batchSize = 10_000
+
     fun createEdge(fromNodeId: Int, toNodeId: Int) {
         try {
             dsl.insertInto(table("edge"))
@@ -38,6 +41,11 @@ class SupplyChainTreeRepository(
         }
     }
 
-    fun fetchDirectEdges(fromNodeId: Int): Result<Record?> =
-        dsl.select().from("edge").where(field("from_id").eq(fromNodeId)).fetch()
+    fun fetchEdges(): Stream<Record> =
+        dsl.select().from(table("edge")).fetchSize(batchSize).fetchStream()
+
+    fun fetchEdges(fromNodeId: Int): Stream<Record> =
+        dsl.select().from("edge").where(field("from_id").eq(fromNodeId))
+            .fetchSize(batchSize).fetchStream()
 }
+

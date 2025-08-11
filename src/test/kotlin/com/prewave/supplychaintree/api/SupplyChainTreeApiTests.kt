@@ -3,7 +3,6 @@ package com.prewave.supplychaintree.api
 import com.prewave.supplychaintree.TestcontainersConfiguration
 import com.prewave.supplychaintree.repository.SupplyChainTreeRepository
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -25,38 +24,44 @@ class SupplyChainTreeApiTests(
         val entity = rest.postForEntity("/api/edge/from/10/to/11", null, Any::class.java)
 
         assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(repository.fetchDirectEdges(10)).hasSize(1)
+        assertThat(repository.fetchEdges(10)).hasSize(1)
     }
 
     @Test
     fun `should not create duplicate edge`() {
-        rest.postForEntity("/api/edge/from/20/to/21", null, Any::class.java)
+        repository.createEdge(20, 21)
 
         val entity = rest.postForEntity("/api/edge/from/20/to/21", null, Any::class.java)
 
         assertThat(entity.statusCode).isEqualTo(HttpStatus.CONFLICT)
-        assertThat(repository.fetchDirectEdges(20)).hasSize(1)
+        assertThat(repository.fetchEdges(20)).hasSize(1)
     }
 
     @Test
     fun `should delete existing edge`() {
-        rest.postForEntity("/api/edge/from/30/to/31", null, Any::class.java)
+        repository.createEdge(30, 31)
 
         val entity = rest.exchange("/api/edge/from/30/to/31", HttpMethod.DELETE, null, Any::class.java)
+
         assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(repository.fetchDirectEdges(30)).isEmpty()
+        assertThat(repository.fetchEdges(30)).isEmpty()
     }
 
     @Test
     fun `should fail when deleting missing edge`() {
         val entity = rest.exchange("/api/edge/from/30/to/32", HttpMethod.DELETE, null, Any::class.java)
+
         assertThat(entity.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
     }
 
     @Test
-    @Disabled //TODO Enable and extend when implemented
-    fun `should get tree`() {
-        val entity = rest.getForEntity("/api/tree/from/1", Any::class.java)
+    fun `should fetch tree`() {
+        repository.createEdge(40, 41)
+        repository.createEdge(40, 42)
+
+        val entity = rest.getForEntity("/api/tree/from/40", List::class.java)
+
         assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
+        assertThat(entity.body).hasSize(2)
     }
 }

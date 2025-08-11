@@ -6,10 +6,13 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.info.Info
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.*
+import java.util.stream.Stream
 
 @OpenAPIDefinition(info = Info(title = "Supply chain tree API", version = "1.0", summary = "A simple API to manage supply chain tree structure"))
+@Tag(name = "Supply chain tree API")
 @RestController
 @RequestMapping("/api")
 class SupplyChainTreeApi(
@@ -41,9 +44,12 @@ class SupplyChainTreeApi(
         repository.deleteEdge(fromNodeId, toNodeId)
     }
 
+    @Operation(summary = "Fetch the whole supply chain tree")
+    @ApiResponse(responseCode = "200", description = "Successfully fetched the tree")
     @GetMapping("/tree/from/{fromNodeId}")
-    fun getTree(@PathVariable fromNodeId: Int): Any {
+    fun fetchTree(@PathVariable fromNodeId: Int): Stream<String> {
         logger.info("Get tree from $fromNodeId")
-        TODO()
+        return repository.fetchEdges(fromNodeId)
+            .map { "${it.getValue("from_id")}->${it.getValue("to_id")}" }
     }
 }
