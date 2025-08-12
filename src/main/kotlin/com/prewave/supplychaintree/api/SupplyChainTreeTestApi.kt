@@ -3,6 +3,7 @@ package com.prewave.supplychaintree.api
 import com.prewave.supplychaintree.service.SupplyChainTreeRepository
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.slf4j.LoggerFactory
@@ -20,7 +21,7 @@ class SupplyChainTreeTestApi(
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     @Operation(summary = "Generate a large supply chain test tree")
-    @ApiResponse(responseCode = "200", description = "Successfully generated a test tree")
+    @ApiResponse(responseCode = "200", description = "Successfully generated a test tree", content = [Content()])
     @PostMapping("/tree/from/{fromNodeId}")
     fun generateLargeTestTree(
         @PathVariable @Parameter fromNodeId: Int,

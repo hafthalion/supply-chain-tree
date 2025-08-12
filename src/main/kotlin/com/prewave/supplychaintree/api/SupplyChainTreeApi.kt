@@ -1,5 +1,6 @@
 package com.prewave.supplychaintree.api
 
+import com.prewave.supplychaintree.api.dto.ErrorResponse
 import com.prewave.supplychaintree.api.dto.FetchTreeNode
 import com.prewave.supplychaintree.service.SupplyChainTreeService
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
@@ -21,13 +22,13 @@ import kotlin.streams.asStream
 @Tag(name = "Supply chain tree API", description = "Public API to manage supply chain tree structure")
 @RestController
 @RequestMapping("/api")
-//TODO Add spring error response schemas
 class SupplyChainTreeApi(
     private val service: SupplyChainTreeService,
 ) {
     @Operation(summary = "Create new supply chain tree edge")
-    @ApiResponse(responseCode = "200", description = "Successfully created the tree edge")
-    @ApiResponse(responseCode = "409", description = "The tree edge already exists")
+    @ApiResponse(responseCode = "200", description = "Successfully created the tree edge", content = [Content()])
+    @ApiResponse(responseCode = "409", description = "The tree edge already exists",
+        content = [Content(mediaType = "application/json", schema = Schema(ErrorResponse::class))])
     @PostMapping("/edge/from/{fromNodeId}/to/{toNodeId}")
     fun createEdge(
         @PathVariable @Parameter fromNodeId: Int,
@@ -37,8 +38,9 @@ class SupplyChainTreeApi(
     }
 
     @Operation(summary = "Delete an existing supply chain tree edge")
-    @ApiResponse(responseCode = "200", description = "Successfully deleted the tree edge")
-    @ApiResponse(responseCode = "404", description = "The tree edge does not exist")
+    @ApiResponse(responseCode = "200", description = "Successfully deleted the tree edge", content = [Content()])
+    @ApiResponse(responseCode = "404", description = "The tree edge does not exist",
+        content = [Content(mediaType = "application/json", schema = Schema(ErrorResponse::class))])
     @DeleteMapping("/edge/from/{fromNodeId}/to/{toNodeId}")
     fun deleteEdge(
         @PathVariable fromNodeId: Int,
@@ -56,7 +58,8 @@ allowing effective processing on the client side, i.e. processed elements can be
     )
     @ApiResponse(responseCode = "200", description = "Successfully fetched the tree structure",
         content = [Content(mediaType = "application/json", array = ArraySchema(schema = Schema(FetchTreeNode::class)))])
-    @ApiResponse(responseCode = "404", description = "The tree with that starting node does not exist", content = [Content()])
+    @ApiResponse(responseCode = "404", description = "The tree with that starting node does not exist",
+        content = [Content(mediaType = "application/json", schema = Schema(ErrorResponse::class))])
     @GetMapping("/tree/from/{fromNodeId}")
     fun fetchTree(@PathVariable fromNodeId: Int): Stream<FetchTreeNode> {
         return service.fetchTree(fromNodeId).asStream()
