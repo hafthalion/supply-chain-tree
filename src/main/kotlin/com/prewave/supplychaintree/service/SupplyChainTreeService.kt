@@ -35,32 +35,30 @@ class SupplyChainTreeService(
     fun fetchTree(fromNodeId: Int): Sequence<FetchTreeNode> {
         logger.info("Get tree from $fromNodeId")
 
-        if (!repository.hasDirectEdges(fromNodeId)) {
+        val linearEdges: Iterator<Pair<Int, Int>> = repository.fetchReachableEdges(fromNodeId).iterator()
+
+        if (!linearEdges.hasNext()) {
             throw TreeNotFoundException(fromNodeId)
         }
 
-        val linearEdges: Iterator<Pair<Int, Int>> = repository.fetchReachableEdges(fromNodeId).iterator()
-
         val foldedEdges = sequence {
-            if (linearEdges.hasNext()) {
-                var e = linearEdges.next()
-                var fromNodeId = e.first
-                var toNodeIds = mutableListOf(e.second)
+            var e = linearEdges.next()
+            var fromNodeId = e.first
+            var toNodeIds = mutableListOf(e.second)
 
-                while (linearEdges.hasNext()) {
-                    e = linearEdges.next()
+            while (linearEdges.hasNext()) {
+                e = linearEdges.next()
 
-                    if (e.first == fromNodeId) {
-                        toNodeIds.add(e.second)
-                    } else {
-                        yield(FetchTreeNode(fromNodeId, toNodeIds))
-                        fromNodeId = e.first
-                        toNodeIds = mutableListOf(e.second)
-                    }
+                if (e.first == fromNodeId) {
+                    toNodeIds.add(e.second)
+                } else {
+                    yield(FetchTreeNode(fromNodeId, toNodeIds))
+                    fromNodeId = e.first
+                    toNodeIds = mutableListOf(e.second)
                 }
-
-                yield(FetchTreeNode(fromNodeId, toNodeIds))
             }
+
+            yield(FetchTreeNode(fromNodeId, toNodeIds))
         }
 
         return foldedEdges

@@ -1,18 +1,17 @@
 package com.prewave.supplychaintree.service
 
+import com.prewave.supplychaintree.api.dto.FetchTreeNode
 import com.prewave.supplychaintree.exception.EdgeAlreadyExistsException
 import com.prewave.supplychaintree.exception.EdgeNotFoundException
+import com.prewave.supplychaintree.exception.TreeNotFoundException
+import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.junit.jupiter.MockitoExtension
-import org.mockito.kotlin.any
-import org.mockito.kotlin.doNothing
-import org.mockito.kotlin.doThrow
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.whenever
+import org.mockito.kotlin.*
+import java.util.stream.Stream
+import kotlin.streams.asStream
 
 @ExtendWith(MockitoExtension::class)
 class SupplyChainTreeServiceTest {
@@ -48,6 +47,7 @@ class SupplyChainTreeServiceTest {
 
         verify(repository).deleteEdge(1, 2)
     }
+
     @Test
     fun `should fail when deleting unknown edge from repository`() {
         whenever(repository.deleteEdge(any(), any())).thenReturn(0)
@@ -60,9 +60,29 @@ class SupplyChainTreeServiceTest {
     }
 
     @Test
-    @Disabled("Not implemented yet")
     fun `should fetch tree structure`() {
-        TODO()
+        whenever(repository.fetchReachableEdges(any())).thenReturn(
+            Stream.of(1 to 20, 1 to 3, 1 to 4, 20 to 5, 20 to 6, 5 to 7)
+        )
+
+        val tree = service.fetchTree(1).asStream()
+
+        verify(repository).fetchReachableEdges(1)
+        assertThat(tree).hasSize(3).containsExactly(
+            FetchTreeNode(1, listOf(20, 3, 4)),
+            FetchTreeNode(20, listOf(5, 6)),
+            FetchTreeNode(5, listOf(7)),
+        )
     }
 
+    @Test
+    fun `should fail when fetching unknown tree`() {
+        whenever(repository.fetchReachableEdges(any())).thenReturn(Stream.of())
+
+        assertThatThrownBy {
+            service.fetchTree(1)
+        }.isInstanceOf(TreeNotFoundException::class.java)
+
+        verify(repository).fetchReachableEdges(1)
+    }
 }

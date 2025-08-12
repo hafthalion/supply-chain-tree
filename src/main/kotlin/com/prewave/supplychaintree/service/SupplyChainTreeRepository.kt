@@ -2,7 +2,7 @@ package com.prewave.supplychaintree.service
 
 import com.prewave.supplychaintree.exception.EdgeAlreadyExistsException
 import org.jooq.DSLContext
-import org.jooq.impl.DSL
+import org.jooq.impl.DSL.*
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Repository
 import java.util.stream.Stream
@@ -18,9 +18,9 @@ class SupplyChainTreeRepository(
 
     fun createEdge(fromNodeId: Int, toNodeId: Int) {
         try {
-            dsl.insertInto(DSL.table("edge"))
-                .set(DSL.field("from_id"), fromNodeId)
-                .set(DSL.field("to_id"), toNodeId)
+            dsl.insertInto(table("edge"))
+                .set(field("from_id"), fromNodeId)
+                .set(field("to_id"), toNodeId)
                 .execute()
         } catch (e: DuplicateKeyException) {
             throw EdgeAlreadyExistsException(fromNodeId, toNodeId, e)
@@ -28,10 +28,10 @@ class SupplyChainTreeRepository(
     }
 
     fun deleteEdge(fromNodeId: Int, toNodeId: Int): Int {
-        val deletedRows = dsl.deleteFrom(DSL.table("edge"))
+        val deletedRows = dsl.deleteFrom(table("edge"))
             .where(
-                DSL.field("from_id").eq(fromNodeId)
-                    .and(DSL.field("to_id").eq(toNodeId))
+                field("from_id").eq(fromNodeId)
+                    .and(field("to_id").eq(toNodeId))
             ).execute()
 
         return deletedRows
@@ -59,35 +59,28 @@ class SupplyChainTreeRepository(
      */
     //TODO Turn off autocommit to keep db cursor open
     fun fetchReachableEdges(fromNodeId: Int): Stream<Pair<Int, Int>> {
-        return dsl.withRecursive(DSL.name("rq"), DSL.name("from_id"), DSL.name("to_id"))
+        return dsl.withRecursive(name("rq"), name("from_id"), name("to_id"))
             .`as`(
-                DSL.select(DSL.field("from_id"), DSL.field("to_id"))
-                    .from(DSL.table("edge"))
-                    .where(DSL.field("from_id").eq(fromNodeId))
+                select(field("from_id"), field("to_id"))
+                    .from(table("edge"))
+                    .where(field("from_id").eq(fromNodeId))
                     .unionAll(
-                        DSL.select(DSL.field(DSL.name("e", "from_id")), DSL.field(DSL.name("e", "to_id")))
-                            .from(DSL.name("rq"))
-                            .join(DSL.table("edge").`as`("e"))
-                            .on(DSL.field(DSL.name("rq", "to_id")).eq(DSL.field(DSL.name("e", "from_id"))))
+                        select(field(name("e", "from_id")), field(name("e", "to_id")))
+                            .from(name("rq"))
+                            .join(table("edge").`as`("e"))
+                            .on(field(name("rq", "to_id")).eq(field(name("e", "from_id"))))
                     )
             )
             .select()
-            .from(DSL.name("rq"))
+            .from(name("rq"))
             .fetchSize(batchSize)
             .fetchStream()
             .map { it.getValue(0, Int::class.java) to it.getValue(1, Int::class.java) }
     }
 
-    fun hasDirectEdges(fromNodeId: Int): Boolean =
-        dsl.fetchExists(
-            DSL.select()
-            .from(DSL.table("edge"))
-            .where(DSL.field(DSL.name("from_id")).eq(fromNodeId))
-        )
-
     fun generateLargeTree(fromNodeId: Int, size: Int, arity: Int? = null) {
-        val insert = dsl.insertInto(DSL.table("edge"))
-            .columns(DSL.field("from_id"), DSL.field("to_id"))
+        val insert = dsl.insertInto(table("edge"))
+            .columns(field("from_id"), field("to_id"))
             .values(0, 0) // param placeholders
 
         generateTreeSequence(fromNodeId, size, arity ?: log10(size.toDouble()).toInt())
