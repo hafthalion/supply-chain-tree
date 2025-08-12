@@ -31,6 +31,13 @@ To run and test the service you can follow these steps:
 5. Open the service API UI: [Open API docs](http://localhost:8080/swagger-ui/index.html)
 6. Optionally create a large test tree using: [/test/tree/from/{fromNodeId}](http://localhost:8080/swagger-ui/index.html#/Supply%20chain%20tree%20API%20for%20testing/generateLargeTestTree)
 
+For large trees use command line instead of UI to avoid browser freezes:
+```shell
+curl -X 'GET' 'http://localhost:8080/api/tree/from/1' -H 'accept: application/json'
+```
+
+You can also use HTTP Client of IntelliJ Idea: [SupplyChainTreeApi.http](src/test/http/SupplyChainTreeApi.http).
+
 ## Design decisions
 
 [REST API endpoints](src/main/kotlin/com/prewave/supplychaintree/api/SupplyChainTreeApi.kt) adhere to the restful principles where appropriate HTTP methods are used, incl. GET, POST, DELETE. For edge creation the POST method was chosen instead of PUT because of the requirement on the error response, which makes the endpoint not idempotent.

@@ -1,14 +1,11 @@
-@fromNodeId=1
-@toNodeId=2
-
 ### Get the whole tree starting at nodeId
-GET {{host}}/api/tree/from/{{fromNodeId}}
+GET {{host}}/api/tree/from/1
 
 ### Create a new tree edge
-POST {{host}}/api/edge/from/{{fromNodeId}}/to/{{toNodeId}}
+POST {{host}}/api/edge/from/1/to/2
 
 ### Delete an existing tree edge
-DELETE {{host}}/api/edge/from/{{fromNodeId}}/to/{{toNodeId}}
+DELETE {{host}}/api/edge/from/1/to/2
 
 ### Generate a large test tree
-POST {{host}}/api/tree/from/{{fromNodeId}}?size=1000
+POST {{host}}/api/tree/from/1000?size=1000
