@@ -1,7 +1,7 @@
 package com.prewave.supplychaintree.api
 
 import com.prewave.supplychaintree.api.dto.FetchTreeNode
-import com.prewave.supplychaintree.repository.SupplyChainTreeRepository
+import com.prewave.supplychaintree.service.SupplyChainTreeService
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.*
 import java.util.stream.Stream
 import kotlin.streams.asStream
@@ -24,10 +23,8 @@ import kotlin.streams.asStream
 @RequestMapping("/api")
 //TODO Add spring error response schemas
 class SupplyChainTreeApi(
-    private val repository: SupplyChainTreeRepository,
+    private val service: SupplyChainTreeService,
 ) {
-    private val logger = LoggerFactory.getLogger(this::class.java)
-
     @Operation(summary = "Create new supply chain tree edge")
     @ApiResponse(responseCode = "200", description = "Successfully created the tree edge")
     @ApiResponse(responseCode = "409", description = "The tree edge already exists")
@@ -36,8 +33,7 @@ class SupplyChainTreeApi(
         @PathVariable @Parameter fromNodeId: Int,
         @PathVariable @Parameter toNodeId: Int,
     ) {
-        logger.info("Create edge from $fromNodeId to $toNodeId")
-        repository.createEdge(fromNodeId, toNodeId)
+        return service.createEdge(fromNodeId, toNodeId)
     }
 
     @Operation(summary = "Delete an existing supply chain tree edge")
@@ -48,8 +44,7 @@ class SupplyChainTreeApi(
         @PathVariable fromNodeId: Int,
         @PathVariable toNodeId: Int,
     ) {
-        logger.info("Delete edge from $fromNodeId to $toNodeId")
-        repository.deleteEdge(fromNodeId, toNodeId)
+        return service.deleteEdge(fromNodeId, toNodeId)
     }
 
     @Operation(summary = "Fetch the whole supply chain tree structure",
@@ -64,32 +59,7 @@ allowing effective processing on the client side, i.e. processed elements can be
     @ApiResponse(responseCode = "404", description = "The tree with that starting node does not exist", content = [Content()])
     @GetMapping("/tree/from/{fromNodeId}")
     fun fetchTree(@PathVariable fromNodeId: Int): Stream<FetchTreeNode> {
-        logger.info("Get tree from $fromNodeId")
-
-        val linearEdges: Iterator<Pair<Int, Int>> = repository.fetchReachableEdges(fromNodeId).iterator()
-
-        val foldedEdges = sequence {
-            if (linearEdges.hasNext()) {
-                var e = linearEdges.next()
-                var fromNodeId = e.first
-                var toNodeIds = mutableListOf(e.second)
-
-                while (linearEdges.hasNext()) {
-                    e = linearEdges.next()
-
-                    if (e.first == fromNodeId) {
-                        toNodeIds.add(e.second)
-                    } else {
-                        yield(FetchTreeNode(fromNodeId, toNodeIds))
-                        fromNodeId = e.first
-                        toNodeIds = mutableListOf(e.second)
-                    }
-                }
-
-                yield(FetchTreeNode(fromNodeId, toNodeIds))
-            }
-        }
-
-        return foldedEdges.asStream()
+        return service.fetchTree(fromNodeId).asStream()
     }
+
 }

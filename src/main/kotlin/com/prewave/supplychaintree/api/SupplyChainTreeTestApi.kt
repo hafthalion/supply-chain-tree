@@ -1,6 +1,6 @@
 package com.prewave.supplychaintree.api
 
-import com.prewave.supplychaintree.repository.SupplyChainTreeRepository
+import com.prewave.supplychaintree.service.SupplyChainTreeRepository
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -28,6 +28,6 @@ class SupplyChainTreeTestApi(
         @Parameter arity: Int?,
     ) {
         logger.info("Generate large test tree from $fromNodeId of size $size and arity $arity")
-        repository.createLargeTree(fromNodeId, size, arity)
+        repository.generateLargeTree(fromNodeId, size, arity)
     }
 }

@@ -2,7 +2,7 @@ package com.prewave.supplychaintree.api
 
 import com.prewave.supplychaintree.TestcontainersConfiguration
 import com.prewave.supplychaintree.exception.TreeNotFoundException
-import com.prewave.supplychaintree.repository.SupplyChainTreeRepository
+import com.prewave.supplychaintree.service.SupplyChainTreeRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -46,7 +46,7 @@ class SupplyChainTreeApiTests(
         val entity = rest.exchange("/api/edge/from/30/to/31", HttpMethod.DELETE, null, Any::class.java)
 
         assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
-        assertThatThrownBy { repository.fetchReachableEdges(30) }.isInstanceOf(TreeNotFoundException::class.java)
+        assertThat(repository.fetchReachableEdges(30)).isEmpty()
     }
 
     @Test
