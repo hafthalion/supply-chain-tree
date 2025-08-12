@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "Supply chain tree API for testing")
+@Tag(name = "Supply chain tree API for testing", description = "Private test API for performance testing of large trees")
 @RestController
 @RequestMapping("/test")
 class SupplyChainTreeTestApi(

@@ -1,50 +1,59 @@
 package com.prewave.supplychaintree.api
 
 import com.prewave.supplychaintree.TestcontainersConfiguration
-import com.prewave.supplychaintree.repository.SupplyChainTreeRepository
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.RepeatedTest
+import org.junit.jupiter.api.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.context.annotation.Import
 import org.springframework.http.HttpMethod.GET
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.util.StreamUtils.drain
 import org.springframework.web.client.RequestCallback
 import org.springframework.web.client.ResponseExtractor
-import kotlin.time.DurationUnit
 import kotlin.time.measureTime
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Import(TestcontainersConfiguration::class)
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class SupplyChainTreeApiPerformanceTests(
     @param:Autowired val rest: TestRestTemplate,
 ) {
-    companion object {
-        @BeforeAll
-        @JvmStatic
-        fun createLargeTree(@Autowired repository: SupplyChainTreeRepository) {
-            val duration = measureTime { repository.createLargeTree(100, 1_000_000) }
+    private val treeSize = 1_000_000
+    private val responseTimeMs = 3000
+    private val responseSizeFactor = 9
 
-            println("Setup duration: " + duration.toString(DurationUnit.SECONDS, 2))
-        }
+    @Test
+    @Order(1)
+    fun `should create large tree`() {
+        val entity = rest.postForEntity("/test/tree/from/100?size=$treeSize", null, Any::class.java)
+
+        assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
+    }
+
+    @Test
+    @Order(2)
+    fun `should fetch large tree for the first time`() {
+        fetchLargeTree()
     }
 
     @RepeatedTest(3)
-    fun `should fetch large tree`() {
-        val duration = measureTime {
-            val requestCallback = RequestCallback { it.headers.accept = listOf(APPLICATION_JSON) }
-//            val responseExtractor = ResponseExtractor { it.body.reader().readText() }
-            val responseExtractor = ResponseExtractor { drain(it.body.buffered()) }
-            val response = rest.execute("/api/tree/from/100", GET, requestCallback, responseExtractor)
+    @Order(3)
+    fun `should fetch large tree in time after warm-up`() {
+        val duration = measureTime { fetchLargeTree() }
 
-            println("Response: $response")
-            assertThat(response).isNotNull
-        }
+        assertThat(duration.inWholeMilliseconds).isLessThan(responseTimeMs.toLong())
+    }
 
-        println("Test duration: " + duration.toString(DurationUnit.SECONDS, 2))
+    private fun fetchLargeTree() {
+        val requestCallback = RequestCallback { it.headers.accept = listOf(APPLICATION_JSON) }
+        val responseExtractor = ResponseExtractor { it.statusCode to drain(it.body.buffered()) }
+        val response = rest.execute("/api/tree/from/100", GET, requestCallback, responseExtractor)
+
+        assertThat(response.first).isEqualTo(HttpStatus.OK)
+        assertThat(response.second).isGreaterThan(treeSize * responseSizeFactor)
     }
 }

@@ -1,8 +1,10 @@
 package com.prewave.supplychaintree.api
 
 import com.prewave.supplychaintree.TestcontainersConfiguration
+import com.prewave.supplychaintree.exception.TreeNotFoundException
 import com.prewave.supplychaintree.repository.SupplyChainTreeRepository
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -44,7 +46,7 @@ class SupplyChainTreeApiTests(
         val entity = rest.exchange("/api/edge/from/30/to/31", HttpMethod.DELETE, null, Any::class.java)
 
         assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(repository.fetchReachableEdges(30)).isEmpty()
+        assertThatThrownBy { repository.fetchReachableEdges(30) }.isInstanceOf(TreeNotFoundException::class.java)
     }
 
     @Test
@@ -58,10 +60,21 @@ class SupplyChainTreeApiTests(
     fun `should fetch tree`() {
         repository.createEdge(40, 41)
         repository.createEdge(40, 42)
+        repository.createEdge(41, 43)
+        repository.createEdge(41, 44)
 
         val entity = rest.getForEntity("/api/tree/from/40", List::class.java)
 
         assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(entity.body).hasSize(2)
+        assertThat(entity.body).hasSize(2).first()
+            .hasFieldOrPropertyWithValue("id", 40)
+            .hasFieldOrPropertyWithValue("to", listOf(41, 42))
+    }
+
+    @Test
+    fun `should fail when fetching missing tree`() {
+        val entity = rest.getForEntity("/api/tree/from/45", Any::class.java)
+
+        assertThat(entity.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
     }
 }
