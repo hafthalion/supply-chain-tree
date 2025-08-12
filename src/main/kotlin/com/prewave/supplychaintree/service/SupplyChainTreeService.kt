@@ -28,15 +28,18 @@ class SupplyChainTreeService(
         }
     }
 
+    /**
+     * Fetches all reachable tree edges from the repository and grouping them to single element per each node.
+     * For this to work the repository has to return all child edges of any given node in sequence as rows coming directly after each other.
+     */
     fun fetchTree(fromNodeId: Int): Sequence<FetchTreeNode> {
+        logger.info("Get tree from $fromNodeId")
+
         if (!repository.hasDirectEdges(fromNodeId)) {
             throw TreeNotFoundException(fromNodeId)
         }
 
-        logger.info("Get tree from $fromNodeId")
-
-        var fromNodeId1 = fromNodeId
-        val linearEdges: Iterator<Pair<Int, Int>> = repository.fetchReachableEdges(fromNodeId1).iterator()
+        val linearEdges: Iterator<Pair<Int, Int>> = repository.fetchReachableEdges(fromNodeId).iterator()
 
         val foldedEdges = sequence {
             if (linearEdges.hasNext()) {

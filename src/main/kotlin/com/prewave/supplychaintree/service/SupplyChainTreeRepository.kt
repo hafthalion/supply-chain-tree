@@ -41,6 +41,11 @@ class SupplyChainTreeRepository(
      * Fetch all the reachable edges from a given node.
      * For this a recursive SQL query is used at the moment as an easy and also surprisingly effective solution.
      *
+     * The method has to return all child edges of any given node in sequence as rows coming directly after each other
+     * for the streaming algorithm to be able to work.
+     *
+     * Used SQL query in the form of:
+     *
      * WITH RECURSIVE rq(from_id, to_id) AS (
      *     SELECT from_id, to_id
      *     FROM edge e
