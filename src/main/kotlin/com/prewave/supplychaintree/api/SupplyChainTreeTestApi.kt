@@ -19,15 +19,15 @@ class SupplyChainTreeTestApi(
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    @Operation(summary = "Create a large supply chain test tree")
-    @ApiResponse(responseCode = "200", description = "Successfully created the test tree")
+    @Operation(summary = "Generate a large supply chain test tree")
+    @ApiResponse(responseCode = "200", description = "Successfully generated a test tree")
     @PostMapping("/tree/from/{fromNodeId}")
-    fun createLargeTestTree(
+    fun generateLargeTestTree(
         @PathVariable @Parameter fromNodeId: Int,
         @Parameter size: Int,
         @Parameter arity: Int?,
     ) {
-        logger.info("Create large test tree from $fromNodeId of size $size and arity $arity")
+        logger.info("Generate large test tree from $fromNodeId of size $size and arity $arity")
         repository.createLargeTree(fromNodeId, size, arity)
     }
 }

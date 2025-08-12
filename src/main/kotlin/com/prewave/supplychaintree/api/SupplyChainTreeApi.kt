@@ -1,6 +1,6 @@
 package com.prewave.supplychaintree.api
 
-import com.prewave.supplychaintree.api.dto.FetchTreeResponse
+import com.prewave.supplychaintree.api.dto.FetchTreeNode
 import com.prewave.supplychaintree.repository.SupplyChainTreeRepository
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.Operation
@@ -17,15 +17,12 @@ import java.util.stream.Stream
 import kotlin.streams.asStream
 
 @OpenAPIDefinition(
-    info = Info(
-        title = "Supply chain tree API",
-        version = "1.0",
-        summary = "A simple API to manage supply chain tree structure"
-    )
+    info = Info(title = "Supply chain tree API", version = "1.0", summary = "A simple API to manage supply chain tree structure")
 )
-@Tag(name = "Supply chain tree API")
+@Tag(name = "Supply chain tree API", description = "Public API to manage supply chain tree structure")
 @RestController
 @RequestMapping("/api")
+//TODO Add spring error response schemas
 class SupplyChainTreeApi(
     private val repository: SupplyChainTreeRepository,
 ) {
@@ -55,12 +52,18 @@ class SupplyChainTreeApi(
         repository.deleteEdge(fromNodeId, toNodeId)
     }
 
-    @Operation(summary = "Fetch the whole supply chain tree hierarchy")
-    @ApiResponse(responseCode = "200", description = "Successfully fetched the tree hierarchy",
-        content = [Content(mediaType = "application/json", array = ArraySchema(schema = Schema(FetchTreeResponse::class)))])
+    @Operation(summary = "Fetch the whole supply chain tree structure",
+        description = """
+Fetch the whole supply chain tree structure starting with the fromNodeId.
+The node elements are streamed in chunks and in the tree hierarchy order, meaning that node ID references are forward only,
+allowing effective processing on the client side, i.e. processed elements can be forgotten.
+        """
+    )
+    @ApiResponse(responseCode = "200", description = "Successfully fetched the tree structure",
+        content = [Content(mediaType = "application/json", array = ArraySchema(schema = Schema(FetchTreeNode::class)))])
     @ApiResponse(responseCode = "404", description = "The tree with that starting node does not exist", content = [Content()])
     @GetMapping("/tree/from/{fromNodeId}")
-    fun fetchTree(@PathVariable fromNodeId: Int): Stream<Any> {
+    fun fetchTree(@PathVariable fromNodeId: Int): Stream<FetchTreeNode> {
         logger.info("Get tree from $fromNodeId")
 
         val linearEdges: Iterator<Pair<Int, Int>> = repository.fetchReachableEdges(fromNodeId).iterator()
@@ -77,13 +80,13 @@ class SupplyChainTreeApi(
                     if (e.first == fromNodeId) {
                         toNodeIds.add(e.second)
                     } else {
-                        yield(FetchTreeResponse(fromNodeId, toNodeIds))
+                        yield(FetchTreeNode(fromNodeId, toNodeIds))
                         fromNodeId = e.first
                         toNodeIds = mutableListOf(e.second)
                     }
                 }
 
-                yield(FetchTreeResponse(fromNodeId, toNodeIds))
+                yield(FetchTreeNode(fromNodeId, toNodeIds))
             }
         }
 

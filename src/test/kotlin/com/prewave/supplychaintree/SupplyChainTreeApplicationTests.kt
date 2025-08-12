@@ -8,6 +8,6 @@ import org.springframework.context.annotation.Import
 @Import(TestcontainersConfiguration::class)
 class SupplyChainTreeApplicationTests {
     @Test
-    fun contextLoads() {
+    fun `spring context loads`() {
     }
 }

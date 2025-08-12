@@ -12,6 +12,7 @@ import kotlin.math.log10
 
 
 //TODO Use jooq generator for type-safe access
+//TODO Refactor logic into service component
 @Repository
 class SupplyChainTreeRepository(
     private val dsl: DSLContext,
@@ -42,17 +43,21 @@ class SupplyChainTreeRepository(
     }
 
     /**
-    WITH RECURSIVE rq(from_id, to_id) AS (
-        SELECT from_id, to_id
-        FROM edge e
-        WHERE from_id = 100000
-        UNION ALL
-        SELECT e.from_id, e.to_id
-        FROM rq INNER JOIN edge e ON rq.to_id = e.from_id
-    )
-    SELECT from_id, to_id
-    FROM rq;
+     * Fetch all the reachable edges from a given node.
+     * For this a recursive SQL query is used at the moment as an easy and also surprisingly effective solution.
+     *
+     * WITH RECURSIVE rq(from_id, to_id) AS (
+     *     SELECT from_id, to_id
+     *     FROM edge e
+     *     WHERE from_id = 100000
+     *     UNION ALL
+     *     SELECT e.from_id, e.to_id
+     *     FROM rq INNER JOIN edge e ON rq.to_id = e.from_id
+     * )
+     * SELECT from_id, to_id
+     * FROM rq;
      */
+    //TODO Turn off autocommit to keep db cursor open
     fun fetchReachableEdges(fromNodeId: Int): Stream<Pair<Int, Int>> {
         if (!hasDirectEdges(fromNodeId)) {
             throw TreeNotFoundException(fromNodeId)

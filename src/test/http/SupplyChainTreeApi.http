@@ -9,3 +9,6 @@ POST {{host}}/api/edge/from/{{fromNodeId}}/to/{{toNodeId}}
 
 ### Delete an existing tree edge
 DELETE {{host}}/api/edge/from/{{fromNodeId}}/to/{{toNodeId}}
+
+### Generate a large test tree
+POST {{host}}/api/tree/from/{{fromNodeId}}?size=1000
