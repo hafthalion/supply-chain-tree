@@ -1,13 +1,53 @@
-# Objective
+# Supply chain tree API
+
+A simple supply chain tree management API.
+
+## Content
+- [Objective](#objective)
+- [Running the service](#running-the-service)
+- [Design decisions](#design-decisions)
+- [Requirements](#requirements)
+- [Technical Specifications](#technical-specifications)
+- [Deliverables](#deliverables)
+
+## Objective
 
 Your task is to implement a backend service using Spring Boot with Kotlin to manage a tree data
 structure. The tree will be represented using a set of edges, where each edge connects two
 nodes. Your implementation should support functionalities to add and delete edges, as well as
 retrieve the entire tree starting from a given node.
 
-# Requirements
+## Running the service
 
-## Data Model
+The service is built as Spring Boot application using Gradle which gets all dependencies automatically. The database is an external dependency, Docker compose setup is provided for this. Database schema is automatically created using Liquibase during runtime.
+
+Following system components are required to be installed:
+1. JDK 21
+2. Docker
+
+To run and test the service you can follow these steps:
+1. Go to the project directory
+2. Run the start script: `run`
+5. Open the service API UI: [Open API docs](http://localhost:8080/swagger-ui/index.html)
+6. Optionally create a large test tree using: [/test/tree/from/{fromNodeId}](http://localhost:8080/swagger-ui/index.html#/Supply%20chain%20tree%20API%20for%20testing/generateLargeTestTree)
+
+## Design decisions
+
+[REST API endpoints](src/main/kotlin/com/prewave/supplychaintree/api/SupplyChainTreeApi.kt) adhere to the restful principles where appropriate HTTP methods are used, incl. GET, POST, DELETE. For edge creation the POST method was chosen instead of PUT because of the requirement on the error response, which makes the endpoint not idempotent.
+
+Some mandatory API parameters were placed directly into the path for the edges and tree to be able to act as an HTTP resource and easier handling.
+
+For the GET tree endpoint a flat array structure of edges from a given node was chosen because of the requirement to handle large tree structures. A flat array structure can be streamed each element at a time in an effective way end to end. A true tree hierarchy would be too heavy on memory both on the server (generation) and client (parsing) side. The node elements are streamed in the tree hierarchy order, meaning that node ID references are forward only, allowing effective processing on the client side, i.e. processed elements can be forgotten.
+
+The fetching of all reachable edges from the database a recursive SQL query with streaming is used at the moment as an easy and also surprisingly effective solution to avoid building complex read-models unless necessary.
+
+Error handling is done using exceptions and leveraging the Spring framework to convert them into standard meaningful error responses.
+
+A test API was added to easily generate a large tree structure for performance testing. This test API is meant to be behind an authorization check. For this Spring Security can be used.
+
+## Requirements
+
+### Data Model
 
 1. Create a table named edge in a PostgreSQL database with the following columns:
 
@@ -30,9 +70,9 @@ In this example
 - Node 2 has two children: nodes 4 and 5
 - Node 3 has one child: node 6
 
-## Endpoints
+### Endpoints
 
-### Create an Edge
+#### Create an Edge
 
 This endpoint should allow adding a new edge to the database. If an edge already exists the
 operation should return an appropriate error response.
@@ -60,7 +100,7 @@ Since trees can be very large, the implementation should be
 optimised for performance to handle large trees without performance degradation or memory
 overflow.
 
-# Technical Specifications
+## Technical Specifications
 
 - Language: Kotlin
 - Framework: Spring Boot
@@ -70,7 +110,7 @@ overflow.
 - Error Handling: The application should handle errors gracefully, including invalid inputs,
   duplicate entries, and database errors.
 
-# Deliverables
+## Deliverables
 
 1. A GitHub repository or ZIP file containing the complete source code.
 2. Instructions for setting up and running the application locally, including any necessary

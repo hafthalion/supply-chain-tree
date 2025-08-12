@@ -1,1 +1,1 @@
-rootProject.name = "SupplyChainTree"
+rootProject.name = "supply-chain-tree"
