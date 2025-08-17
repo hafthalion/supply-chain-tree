@@ -7,6 +7,7 @@ import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Repository
 import java.util.stream.Stream
 import kotlin.math.log10
+import kotlin.math.max
 
 //TODO Use jooq generator for type-safe access
 //TODO Refactor logic into service component
@@ -83,7 +84,7 @@ class SupplyChainTreeRepository(
             .columns(field("from_id"), field("to_id"))
             .values(0, 0) // param placeholders
 
-        generateTreeSequence(fromNodeId, size, arity ?: log10(size.toDouble()).toInt())
+        generateTreeSequence(fromNodeId, size, arity ?: max(log10(size.toDouble()).toInt(), 1))
             .chunked(batchSize)
             .forEach { chunk ->
                 val batch = dsl.batch(insert)
