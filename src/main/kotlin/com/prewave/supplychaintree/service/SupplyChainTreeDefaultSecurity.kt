@@ -1,8 +1,7 @@
-package com.prewave.supplychaintree.api
+package com.prewave.supplychaintree.service
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.annotation.Order
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.invoke
@@ -11,17 +10,18 @@ import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 @EnableWebSecurity
-class SupplyChainTreeApiSecurity {
+class SupplyChainTreeDefaultSecurity {
     @Bean
-    @Order(1)
-    fun apiSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
+    fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http {
-            securityMatcher("/api/**")
             cors { disable() }
             csrf { disable() }
             sessionManagement { sessionCreationPolicy = STATELESS }
             authorizeHttpRequests {
-                authorize(anyRequest, permitAll)
+                authorize("/swagger-ui/**", permitAll)
+                authorize("/v3/api-docs/**", permitAll)
+                authorize("/error", permitAll)
+                authorize(anyRequest, denyAll)
             }
         }
 
