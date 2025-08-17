@@ -15,6 +15,7 @@ import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 @EnableWebSecurity
+@Profile("default")
 class SupplyChainTreeTestApiSecurity {
     @Bean
     @Order(1)
@@ -34,10 +35,9 @@ class SupplyChainTreeTestApiSecurity {
     }
 
     @Bean
-    @Profile("default")
-    fun users(): UserDetailsService {
+    fun testUsers(): UserDetailsService {
         val user = User.withUsername("test")
-            .password("{noop}secret") // {noop} = no encoding
+            .password("{noop}secret")
             .roles("TEST")
             .build()
 

@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDO
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.context.annotation.Import
 import org.springframework.http.HttpMethod.GET
+import org.springframework.http.HttpMethod.POST
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.util.StreamUtils.drain
@@ -38,9 +39,15 @@ class SupplyChainTreeApiPerformanceTests(
     @Test
     @Order(1)
     fun `should create large tree`() {
-        val entity = rest.postForEntity("/test/tree/from/100?size=$treeSize", null, Any::class.java)
+        val requestCallback = RequestCallback {
+            it.headers.accept = listOf(APPLICATION_JSON)
+            it.headers.setBasicAuth("test", "secret")
+        }
+        val responseExtractor = rest.restTemplate.responseEntityExtractor<Any>(Any::class.java)
 
-        assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
+        val response = rest.execute("/test/tree/from/100?size={size}", POST, requestCallback, responseExtractor, treeSize)
+
+        assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
     }
 
     @Test
@@ -60,6 +67,7 @@ class SupplyChainTreeApiPerformanceTests(
     private fun fetchLargeTree() {
         val requestCallback = RequestCallback { it.headers.accept = listOf(APPLICATION_JSON) }
         val responseExtractor = ResponseExtractor { it.statusCode to drain(it.body.buffered()) }
+
         val response = rest.execute("/api/tree/from/100", GET, requestCallback, responseExtractor)
 
         assertThat(response.first).isEqualTo(HttpStatus.OK)
