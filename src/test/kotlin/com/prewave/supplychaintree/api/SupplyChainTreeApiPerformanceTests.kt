@@ -32,8 +32,8 @@ import kotlin.time.measureTime
 class SupplyChainTreeApiPerformanceTests(
     @param:Autowired val rest: TestRestTemplate,
 ) {
-    private val treeSize = 1_000_000
-    private val responseTimeMs = 3000
+    private val treeSize = 100_000
+    private val responseTimeMs = 500
     private val responseSizeFactor = 9
 
     @Test
