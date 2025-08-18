@@ -3,12 +3,15 @@ package com.prewave.supplychaintree.service
 import com.prewave.supplychaintree.api.dto.FetchTreeNode
 import com.prewave.supplychaintree.exception.EdgeNotFoundException
 import com.prewave.supplychaintree.exception.TreeNotFoundException
+import jakarta.validation.constraints.Min
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.validation.annotation.Validated
 import kotlin.math.log10
 import kotlin.math.max
 
 @Service
+@Validated
 class SupplyChainTreeService(
     private val repository: SupplyChainTreeRepository,
 ) {
@@ -68,7 +71,7 @@ class SupplyChainTreeService(
         return foldedEdges
     }
 
-    fun generateLargeTree(fromNodeId: Int, size: Int, arity: Int? = null) {
+    fun generateLargeTree(fromNodeId: Int, @Min(1) size: Int, @Min(1) arity: Int? = null) {
         logger.info("Generate large tree from $fromNodeId of size $size and arity $arity")
 
         val arityOrDefault = arity ?: max(log10(size.toDouble()).toInt(), 1)

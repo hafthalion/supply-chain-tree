@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.security.SecurityScheme
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.slf4j.LoggerFactory
+import jakarta.validation.constraints.Min
 import org.springframework.context.annotation.Profile
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -30,8 +30,8 @@ class SupplyChainTreeTestApi(
     @PostMapping("/tree/from/{fromNodeId}")
     fun generateLargeTestTree(
         @PathVariable @Parameter fromNodeId: Int,
-        @Parameter size: Int,
-        @Parameter arity: Int?,
+        @Parameter @Min(1) size: Int,
+        @Parameter @Min(1) arity: Int?,
     ) {
         service.generateLargeTree(fromNodeId, size, arity)
     }
