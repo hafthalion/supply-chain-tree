@@ -1,3 +1,3 @@
 call gradlew clean build
 docker compose up -d
-java -jar build/libs/supply-chain-tree-1.0-SNAPSHOT.jar
+java -jar build/libs/supply-chain-tree-1.0-SNAPSHOT.jar --spring.config.additional-location=./config/

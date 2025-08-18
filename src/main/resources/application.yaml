@@ -1,14 +1,12 @@
+# Common configuration properties for all profiles/environments
+
 spring:
   application:
     name: SupplyChainTree
-  datasource:
-    url: jdbc:postgresql://localhost:5432/mydatabase
-    username: myuser
-    password: secret
   jooq:
     sql-dialect: POSTGRES
 
 server:
   compression:
     enabled: true
-    mime-types: application/json,text/plain
+    mime-types: application/json

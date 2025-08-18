@@ -1,0 +1,7 @@
+# Environment specific configuration properties
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mydatabase
+    username: db
+    password: secret

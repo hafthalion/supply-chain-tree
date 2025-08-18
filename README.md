@@ -25,11 +25,11 @@ Following system components are required to be installed:
 1. JDK 21
 2. Docker
 
-To run and test the service you can follow these steps:
-1. Go to the project directory
-2. Run the start script: `run`
-5. Open the service API UI: [Open API docs](http://localhost:8080/swagger-ui/index.html)
-6. Optionally create a large test tree using: [/test/tree/from/{fromNodeId}](http://localhost:8080/swagger-ui/index.html#/Supply%20chain%20tree%20API%20for%20testing/generateLargeTestTree)
+To run and test the service locally you can follow these steps:
+1. Go to the project directory (ideally in Git Bash)
+2. Run the start script: `./run`
+3. Open the service API UI: [Open API docs](http://localhost:8080/swagger-ui/index.html)
+4. Optionally create a large test tree using: [/test/tree/from/{fromNodeId}](http://localhost:8080/swagger-ui/index.html#/Supply%20chain%20tree%20API%20for%20testing/generateLargeTestTree)
 
 For large trees use command line instead of UI to avoid browser freezes:
 ```shell
@@ -37,6 +37,8 @@ curl -X 'GET' 'http://localhost:8080/api/tree/from/1' -H 'accept: application/js
 ```
 
 You can also use HTTP Client of IntelliJ Idea: [SupplyChainTreeApi.http](src/test/http/SupplyChainTreeApi.http).
+
+Optionally change or add a config/profile for non-local environments in `./config/`
 
 ## Design decisions
 
