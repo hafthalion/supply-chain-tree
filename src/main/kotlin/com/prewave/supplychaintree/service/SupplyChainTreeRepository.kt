@@ -1,22 +1,19 @@
 package com.prewave.supplychaintree.service
 
 import com.prewave.supplychaintree.exception.EdgeAlreadyExistsException
+import com.prewave.supplychaintree.exception.EdgeConflictException
 import org.jooq.DSLContext
 import org.jooq.impl.DSL.*
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Repository
 import java.util.stream.Stream
-import kotlin.math.log10
-import kotlin.math.max
 
 //TODO Use jooq generator for type-safe access
-//TODO Refactor logic into service component
 @Repository
 class SupplyChainTreeRepository(
     private val dsl: DSLContext,
 ) {
-    private val batchSize = 10_000
-
+    @Throws(EdgeAlreadyExistsException::class)
     fun createEdge(fromNodeId: Int, toNodeId: Int) {
         try {
             dsl.insertInto(table("edge"))
@@ -79,31 +76,23 @@ class SupplyChainTreeRepository(
             .map { it.getValue(0, Int::class.java) to it.getValue(1, Int::class.java) }
     }
 
-    fun generateLargeTree(fromNodeId: Int, size: Int, arity: Int? = null) {
+    @Throws(EdgeConflictException::class)
+    fun createEdges(fromToIdSequence: Sequence<Pair<Int, Int>>) {
         val insert = dsl.insertInto(table("edge"))
             .columns(field("from_id"), field("to_id"))
             .values(0, 0) // param placeholders
 
-        generateTreeSequence(fromNodeId, size, arity ?: max(log10(size.toDouble()).toInt(), 1))
-            .chunked(batchSize)
+        fromToIdSequence.chunked(batchSize)
             .forEach { chunk ->
-                val batch = dsl.batch(insert)
-                chunk.forEach { batch.bind(it.first, it.second) }
-                batch.execute()
+                try {
+                    val batch = dsl.batch(insert)
+                    chunk.forEach { batch.bind(it.first, it.second) }
+                    batch.execute()
+                } catch (e: DuplicateKeyException) {
+                    throw EdgeConflictException(e)
+                }
             }
     }
 
-    private fun generateTreeSequence(fromNodeId: Int, size: Int, arity: Int): Sequence<Pair<Int, Int>> = sequence {
-        val nodeIdQueue = ArrayDeque<Int>(size).apply { add(fromNodeId) }
-        var toNodeId = fromNodeId + 1
-
-        while (true) {
-            val fromNodeId = nodeIdQueue.removeFirst()
-
-            repeat(arity) {
-                yield(fromNodeId to toNodeId) // yield node immediately when created
-                nodeIdQueue.addLast(toNodeId++) // add current nodeId to the queue to generate its child nodes later
-            }
-        }
-    }.take(size)
+    private val batchSize = 1_000
 }

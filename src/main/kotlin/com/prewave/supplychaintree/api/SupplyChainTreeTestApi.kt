@@ -1,6 +1,6 @@
 package com.prewave.supplychaintree.api
 
-import com.prewave.supplychaintree.service.SupplyChainTreeRepository
+import com.prewave.supplychaintree.service.SupplyChainTreeService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -18,10 +18,8 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/test")
 @Profile("default")
 class SupplyChainTreeTestApi(
-    private val repository: SupplyChainTreeRepository,
+    private val service: SupplyChainTreeService,
 ) {
-    private val logger = LoggerFactory.getLogger(this::class.java)
-
     @Operation(summary = "Generate a large supply chain test tree")
     @ApiResponse(responseCode = "200", description = "Successfully generated a test tree", content = [Content()])
     @PostMapping("/tree/from/{fromNodeId}")
@@ -30,7 +28,6 @@ class SupplyChainTreeTestApi(
         @Parameter size: Int,
         @Parameter arity: Int?,
     ) {
-        logger.info("Generate large test tree from $fromNodeId of size $size and arity $arity")
-        repository.generateLargeTree(fromNodeId, size, arity)
+        service.generateLargeTree(fromNodeId, size, arity)
     }
 }

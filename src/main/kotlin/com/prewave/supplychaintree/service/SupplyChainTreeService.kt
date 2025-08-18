@@ -5,6 +5,8 @@ import com.prewave.supplychaintree.exception.EdgeNotFoundException
 import com.prewave.supplychaintree.exception.TreeNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import kotlin.math.log10
+import kotlin.math.max
 
 @Service
 class SupplyChainTreeService(
@@ -18,6 +20,7 @@ class SupplyChainTreeService(
         repository.createEdge(fromNodeId, toNodeId)
     }
 
+    @Throws(EdgeNotFoundException::class)
     fun deleteEdge(fromNodeId: Int, toNodeId: Int) {
         logger.info("Delete edge from $fromNodeId to $toNodeId")
 
@@ -32,6 +35,7 @@ class SupplyChainTreeService(
      * Fetches all reachable tree edges from the repository and grouping them to single element per each node.
      * For this to work the repository has to return all child edges of any given node in sequence as rows coming directly after each other.
      */
+    @Throws(TreeNotFoundException::class)
     fun fetchTree(fromNodeId: Int): Sequence<FetchTreeNode> {
         logger.info("Get tree from $fromNodeId")
 
@@ -63,4 +67,27 @@ class SupplyChainTreeService(
 
         return foldedEdges
     }
+
+    fun generateLargeTree(fromNodeId: Int, size: Int, arity: Int? = null) {
+        logger.info("Generate large tree from $fromNodeId of size $size and arity $arity")
+
+        val arityOrDefault = arity ?: max(log10(size.toDouble()).toInt(), 1)
+        val fromToIdSequence = generateLargeTreeSequence(fromNodeId, size, arityOrDefault)
+
+        repository.createEdges(fromToIdSequence)
+    }
+
+    private fun generateLargeTreeSequence(fromNodeId: Int, size: Int, arity: Int): Sequence<Pair<Int, Int>> = sequence {
+        val nodeIdDeque = ArrayDeque<Int>(size).apply { add(fromNodeId) }
+        var toNodeId = fromNodeId + 1
+
+        while (true) {
+            val fromNodeId = nodeIdDeque.removeFirst()
+
+            repeat(arity) {
+                yield(fromNodeId to toNodeId) // yield node immediately when created
+                nodeIdDeque.addLast(toNodeId++) // add current nodeId to the queue to generate its child nodes later
+            }
+        }
+    }.take(size)
 }

@@ -85,4 +85,16 @@ class SupplyChainTreeServiceTest {
 
         verify(repository).fetchReachableEdges(1)
     }
+
+    @Test
+    fun `should generate large tree`() {
+        doNothing().whenever(repository).createEdges(any())
+
+        service.generateLargeTree(1, 6, 2)
+
+        argumentCaptor {
+            verify(repository).createEdges(capture())
+            assertThat(firstValue.asStream()).hasSize(6)
+        }
+    }
 }
