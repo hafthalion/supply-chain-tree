@@ -1,10 +1,10 @@
 package com.prewave.supplychaintree.service
 
 import com.prewave.supplychaintree.api.dto.FetchTreeNode
-import com.prewave.supplychaintree.exception.EdgeAlreadyExistsException
-import com.prewave.supplychaintree.exception.EdgeConflictException
-import com.prewave.supplychaintree.exception.EdgeNotFoundException
-import com.prewave.supplychaintree.exception.TreeNotFoundException
+import com.prewave.supplychaintree.domain.exception.EdgeAlreadyExistsException
+import com.prewave.supplychaintree.domain.exception.EdgeConflictException
+import com.prewave.supplychaintree.domain.exception.EdgeNotFoundException
+import com.prewave.supplychaintree.domain.exception.TreeNotFoundException
 import jakarta.validation.constraints.Min
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service

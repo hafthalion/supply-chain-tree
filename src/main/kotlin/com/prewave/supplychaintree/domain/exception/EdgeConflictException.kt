@@ -1,4 +1,4 @@
-package com.prewave.supplychaintree.exception
+package com.prewave.supplychaintree.domain.exception
 
 import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.ProblemDetail

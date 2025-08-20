@@ -1,7 +1,7 @@
 package com.prewave.supplychaintree.service
 
-import com.prewave.supplychaintree.exception.EdgeAlreadyExistsException
-import com.prewave.supplychaintree.exception.EdgeConflictException
+import com.prewave.supplychaintree.domain.exception.EdgeAlreadyExistsException
+import com.prewave.supplychaintree.domain.exception.EdgeConflictException
 import org.jooq.DSLContext
 import org.jooq.impl.DSL.*
 import org.springframework.dao.DuplicateKeyException
