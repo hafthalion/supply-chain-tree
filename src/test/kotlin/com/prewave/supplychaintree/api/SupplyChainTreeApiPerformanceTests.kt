@@ -23,8 +23,8 @@ import kotlin.time.measureTime
 
 /**
  * Performance test used to assess the total performance for large trees.
- * Change the [treeSize] to generate a test trees another sizes.
- * Also modify the response time assumption [responseTimeMs].
+ * Change the [treeSize] to generate test trees of other sizes.
+ * Also modify the response time assumption [responseTimeMs] (does not fail the tests when not true, just ignores them).
  */
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Import(TestcontainersConfiguration::class)
