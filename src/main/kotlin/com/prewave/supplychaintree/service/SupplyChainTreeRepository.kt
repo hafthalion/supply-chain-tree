@@ -55,7 +55,6 @@ class SupplyChainTreeRepository(
      * SELECT from_id, to_id
      * FROM rq;
      */
-    //TODO Turn off autocommit to keep db cursor open
     fun fetchReachableEdges(fromNodeId: Int): Stream<Pair<Int, Int>> {
         return dsl.withRecursive(name("rq"), name("from_id"), name("to_id"))
             .`as`(
