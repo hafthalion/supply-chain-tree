@@ -1,6 +1,7 @@
 package com.prewave.supplychaintree.service
 
-import com.prewave.supplychaintree.api.dto.FetchTreeNode
+import com.prewave.supplychaintree.domain.TreeEdge
+import com.prewave.supplychaintree.domain.TreeNode
 import com.prewave.supplychaintree.domain.exception.EdgeAlreadyExistsException
 import com.prewave.supplychaintree.domain.exception.EdgeNotFoundException
 import com.prewave.supplychaintree.domain.exception.TreeNotFoundException
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
 import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.support.SimpleTransactionStatus
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
@@ -64,25 +66,25 @@ class SupplyChainTreeServiceTest {
     @Test
     fun `should fetch tree structure`() {
         whenever(transactionManager.getTransaction(any())).thenReturn(SimpleTransactionStatus())
-        whenever(transactionManager.commit(any())).then { }
+        whenever(transactionManager.commit(any())).then {}
         whenever(repository.fetchReachableEdges(any())).thenReturn(
-            Stream.of(1 to 20, 1 to 3, 1 to 4, 20 to 5, 20 to 6, 5 to 7)
+            Stream.of(TreeEdge(1, 20), TreeEdge(1, 3), TreeEdge(1, 4), TreeEdge(20, 5), TreeEdge(20, 6), TreeEdge(5, 7))
         )
 
         val tree = service.fetchTree(1)
 
         verify(repository).fetchReachableEdges(1)
         assertThat(tree).hasSize(3).containsExactly(
-            FetchTreeNode(1, listOf(20, 3, 4)),
-            FetchTreeNode(20, listOf(5, 6)),
-            FetchTreeNode(5, listOf(7)),
+            TreeNode(1, listOf(20, 3, 4)),
+            TreeNode(20, listOf(5, 6)),
+            TreeNode(5, listOf(7)),
         )
     }
 
     @Test
     fun `should fail when fetching unknown tree`() {
         whenever(transactionManager.getTransaction(any())).thenReturn(SimpleTransactionStatus())
-        whenever(transactionManager.rollback(any())).then { }
+        whenever(transactionManager.rollback(any())).then {}
         whenever(repository.fetchReachableEdges(any())).thenReturn(Stream.of())
 
         assertThatThrownBy {

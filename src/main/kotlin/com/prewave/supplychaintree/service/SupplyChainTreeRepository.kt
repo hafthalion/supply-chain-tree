@@ -1,5 +1,6 @@
 package com.prewave.supplychaintree.service
 
+import com.prewave.supplychaintree.domain.TreeEdge
 import com.prewave.supplychaintree.domain.exception.EdgeAlreadyExistsException
 import com.prewave.supplychaintree.domain.exception.EdgeConflictException
 import org.jooq.DSLContext
@@ -55,7 +56,7 @@ class SupplyChainTreeRepository(
      * SELECT from_id, to_id
      * FROM rq;
      */
-    fun fetchReachableEdges(fromNodeId: Int): Stream<Pair<Int, Int>> {
+    fun fetchReachableEdges(fromNodeId: Int): Stream<TreeEdge> {
         return dsl.withRecursive(name("rq"), name("from_id"), name("to_id"))
             .`as`(
                 select(field("from_id"), field("to_id"))
@@ -72,7 +73,7 @@ class SupplyChainTreeRepository(
             .from(name("rq"))
             .fetchSize(batchSize)
             .fetchStream()
-            .map { it.getValue(0, Int::class.java) to it.getValue(1, Int::class.java) }
+            .map { TreeEdge(it.getValue(0, Int::class.java), it.getValue(1, Int::class.java)) }
     }
 
     @Throws(EdgeConflictException::class)

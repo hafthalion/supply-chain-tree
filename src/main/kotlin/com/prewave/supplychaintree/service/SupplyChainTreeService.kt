@@ -1,6 +1,7 @@
 package com.prewave.supplychaintree.service
 
-import com.prewave.supplychaintree.api.dto.FetchTreeNode
+import com.prewave.supplychaintree.domain.TreeEdge
+import com.prewave.supplychaintree.domain.TreeNode
 import com.prewave.supplychaintree.domain.exception.EdgeAlreadyExistsException
 import com.prewave.supplychaintree.domain.exception.EdgeConflictException
 import com.prewave.supplychaintree.domain.exception.EdgeNotFoundException
@@ -55,7 +56,7 @@ class SupplyChainTreeService(
      * @return A sequence of nodes with child edges
      */
     @Throws(TreeNotFoundException::class)
-    fun fetchTree(fromNodeId: Int): Stream<FetchTreeNode> {
+    fun fetchTree(fromNodeId: Int): Stream<TreeNode> {
         logger.info("Get tree from $fromNodeId")
 
         return streamWithTransaction({ repository.fetchReachableEdges(fromNodeId) }) { stream ->
@@ -127,29 +128,29 @@ class SupplyChainTreeService(
             }
         }.take(size)
 
-    private fun Iterator<Pair<Int, Int>>.foldAllChildEdgesIntoParentNodes(source: AutoCloseable): Stream<FetchTreeNode> =
+    private fun Iterator<TreeEdge>.foldAllChildEdgesIntoParentNodes(source: AutoCloseable): Stream<TreeNode> =
         sequence {
             source.use {
                 var e = next()
-                var fromNodeId = e.first
-                var toNodeIds = mutableListOf(e.second)
+                var fromNodeId = e.fromNodeId
+                var toNodeIds = mutableListOf(e.toNodeId)
 
                 while (hasNext()) {
                     e = next()
 
-                    if (e.first == fromNodeId) {
-                        toNodeIds.add(e.second)
+                    if (e.fromNodeId == fromNodeId) {
+                        toNodeIds.add(e.toNodeId)
                     }
                     else {
                         // yield node when parent changed -> all child ids present
-                        yield(FetchTreeNode(fromNodeId, toNodeIds))
-                        fromNodeId = e.first
-                        toNodeIds = mutableListOf(e.second)
+                        yield(TreeNode(fromNodeId, toNodeIds))
+                        fromNodeId = e.fromNodeId
+                        toNodeIds = mutableListOf(e.toNodeId)
                     }
                 }
 
                 // yield last parent node
-                yield(FetchTreeNode(fromNodeId, toNodeIds))
+                yield(TreeNode(fromNodeId, toNodeIds))
             }
         }.asStreamClosingAlso(source) // delegate closing of the new stream to original source stream
 

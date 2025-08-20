@@ -1,5 +1,6 @@
 package com.prewave.supplychaintree.api.dto
 
+import com.prewave.supplychaintree.domain.TreeNode
 import io.swagger.v3.oas.annotations.media.Schema
 
 /**
@@ -10,4 +11,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 data class FetchTreeNode(
     val id: Int,
     val to: List<Int>,
-)
+) {
+    constructor(node: TreeNode) : this(node.nodeId, node.childIds)
+}

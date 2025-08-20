@@ -62,5 +62,6 @@ allowing effective processing on the client side, i.e. processed elements can be
     @GetMapping("/tree/from/{fromNodeId}")
     fun fetchTree(@PathVariable fromNodeId: Int): Stream<FetchTreeNode> {
         return service.fetchTree(fromNodeId)
+            .map(::FetchTreeNode)
     }
 }
