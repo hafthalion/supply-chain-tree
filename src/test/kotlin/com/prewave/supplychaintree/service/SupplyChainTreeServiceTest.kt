@@ -10,14 +10,16 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
+import org.springframework.transaction.PlatformTransactionManager
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
 @ExtendWith(MockitoExtension::class)
 class SupplyChainTreeServiceTest {
     private val repository = mock<SupplyChainTreeRepository>()
+    private val transactionManager = mock<PlatformTransactionManager>()
 
-    private val service = SupplyChainTreeService(repository)
+    private val service = SupplyChainTreeService(repository, transactionManager)
 
     @Test
     fun `should create edge in repository`() {
@@ -65,7 +67,7 @@ class SupplyChainTreeServiceTest {
             Stream.of(1 to 20, 1 to 3, 1 to 4, 20 to 5, 20 to 6, 5 to 7)
         )
 
-        val tree = service.fetchTree(1).asStream()
+        val tree = service.fetchTree(1)
 
         verify(repository).fetchReachableEdges(1)
         assertThat(tree).hasSize(3).containsExactly(

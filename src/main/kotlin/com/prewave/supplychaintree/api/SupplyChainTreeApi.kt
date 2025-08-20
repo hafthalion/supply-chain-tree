@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.*
 import java.util.stream.Stream
-import kotlin.streams.asStream
 
 @OpenAPIDefinition(
     info = Info(title = "Supply chain tree API", version = "1.0", summary = "A simple API to manage supply chain tree structure")
@@ -62,7 +61,6 @@ allowing effective processing on the client side, i.e. processed elements can be
         content = [Content(mediaType = "application/json", schema = Schema(ErrorResponse::class))])
     @GetMapping("/tree/from/{fromNodeId}")
     fun fetchTree(@PathVariable fromNodeId: Int): Stream<FetchTreeNode> {
-        return service.fetchTree(fromNodeId).asStream()
+        return service.fetchTree(fromNodeId)
     }
-
 }
