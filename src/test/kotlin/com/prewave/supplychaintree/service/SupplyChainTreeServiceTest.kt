@@ -63,6 +63,8 @@ class SupplyChainTreeServiceTest {
 
     @Test
     fun `should fetch tree structure`() {
+        whenever(transactionManager.getTransaction(any())).thenReturn(SimpleTransactionStatus())
+        whenever(transactionManager.commit(any())).then { }
         whenever(repository.fetchReachableEdges(any())).thenReturn(
             Stream.of(1 to 20, 1 to 3, 1 to 4, 20 to 5, 20 to 6, 5 to 7)
         )
@@ -79,6 +81,8 @@ class SupplyChainTreeServiceTest {
 
     @Test
     fun `should fail when fetching unknown tree`() {
+        whenever(transactionManager.getTransaction(any())).thenReturn(SimpleTransactionStatus())
+        whenever(transactionManager.rollback(any())).then { }
         whenever(repository.fetchReachableEdges(any())).thenReturn(Stream.of())
 
         assertThatThrownBy {
