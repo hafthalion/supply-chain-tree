@@ -9,10 +9,7 @@ import com.prewave.supplychaintree.domain.exception.TreeNotFoundException
 import jakarta.validation.constraints.Min
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.transaction.PlatformTransactionManager
-import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.transaction.support.DefaultTransactionDefinition
 import org.springframework.validation.annotation.Validated
 import java.util.stream.Stream
 import kotlin.math.log10
@@ -23,7 +20,7 @@ import kotlin.streams.asStream
 @Validated
 class SupplyChainTreeService(
     private val repository: SupplyChainTreeRepository,
-    private val transactionManager: PlatformTransactionManager,
+    private val streamFetcher: StreamFetcher,
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -60,7 +57,9 @@ class SupplyChainTreeService(
     fun fetchTree(fromNodeId: Int): Stream<TreeNode> {
         logger.info("Get tree from $fromNodeId")
 
-        return fetchStreamInTransaction({ repository.fetchReachableEdges(fromNodeId) }) { stream ->
+        val fetchReachableEdges = { repository.fetchReachableEdges(fromNodeId) }
+
+        return streamFetcher.fetchStreamInTransaction(fetchReachableEdges) { stream ->
             val edges = stream.iterator()
 
             if (!edges.hasNext()) {
@@ -71,44 +70,6 @@ class SupplyChainTreeService(
         }
     }
 
-    //TODO refactor into separate class
-    private fun <T, R> fetchStreamInTransaction(supplier: () -> Stream<T>, use: (Stream<T>) -> Stream<R>): Stream<R> {
-        val tx = transactionManager.getTransaction(DefaultTransactionDefinition().apply {
-            isReadOnly = true
-            propagationBehavior = TransactionDefinition.PROPAGATION_REQUIRES_NEW
-        })
-
-        try {
-            return supplier().useClosingOnThrow { stream ->
-                use(stream).onClose {
-                    // delegate closing of the new stream to original source stream
-                    stream.close()
-                    // we cannot distinguish between commit and rollback here, rollback safer and ok for read-only queries
-                    transactionManager.rollback(tx)
-                }
-            }
-        }
-        catch (e: Throwable) {
-            transactionManager.rollback(tx)
-            throw e
-        }
-    }
-
-    private inline fun <T : AutoCloseable, R> T.useClosingOnThrow(block: (T) -> R): R {
-        return try {
-            block(this)
-        }
-        catch (e: Throwable) {
-            try {
-                close()
-            }
-            catch (suppressed: Throwable) {
-                e.addSuppressed(suppressed)
-            }
-
-            throw e
-        }
-    }
 
     @Transactional
     @Throws(EdgeConflictException::class)

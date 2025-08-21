@@ -11,17 +11,15 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
-import org.springframework.transaction.PlatformTransactionManager
-import org.springframework.transaction.support.SimpleTransactionStatus
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
 @ExtendWith(MockitoExtension::class)
 class SupplyChainTreeServiceTest {
     private val repository = mock<SupplyChainTreeRepository>()
-    private val transactionManager = mock<PlatformTransactionManager>()
+    private val streamFetcher = mock<StreamFetcher>()
 
-    private val service = SupplyChainTreeService(repository, transactionManager)
+    private val service = SupplyChainTreeService(repository, streamFetcher)
 
     @Test
     fun `should create edge in repository`() {
@@ -65,13 +63,13 @@ class SupplyChainTreeServiceTest {
 
     @Test
     fun `should fetch tree structure`() {
-        whenever(transactionManager.getTransaction(any())).thenReturn(SimpleTransactionStatus())
-        whenever(transactionManager.commit(any())).then {}
+        wheneverFetchingStreamOf<TreeNode>(streamFetcher).thenSimulateStreamFetcher()
         whenever(repository.fetchReachableEdges(any())).thenReturn(
             Stream.of(TreeEdge(1, 20), TreeEdge(1, 3), TreeEdge(1, 4), TreeEdge(20, 5), TreeEdge(20, 6), TreeEdge(5, 7)))
 
         val tree = service.fetchTree(1)
 
+//        verify(streamFetcher).fetchStreamInTransaction<Any, Any>(any(), any())
         verify(repository).fetchReachableEdges(1)
         assertThat(tree).hasSize(3)
             .containsExactly(
@@ -83,8 +81,7 @@ class SupplyChainTreeServiceTest {
 
     @Test
     fun `should fail when fetching unknown tree`() {
-        whenever(transactionManager.getTransaction(any())).thenReturn(SimpleTransactionStatus())
-        whenever(transactionManager.rollback(any())).then {}
+        wheneverFetchingStreamOf<TreeNode>(streamFetcher).thenSimulateStreamFetcher()
         whenever(repository.fetchReachableEdges(any())).thenReturn(Stream.of())
 
         assertThatThrownBy {
