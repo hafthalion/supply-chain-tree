@@ -1,5 +1,7 @@
 # Docker compose file for local development
 
+name: supply-chain-tree
+
 services:
   postgres:
     image: postgres:latest
