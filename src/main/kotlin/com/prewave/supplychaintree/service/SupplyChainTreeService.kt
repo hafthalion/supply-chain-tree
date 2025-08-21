@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Min
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.support.DefaultTransactionDefinition
 import org.springframework.validation.annotation.Validated
@@ -59,24 +60,29 @@ class SupplyChainTreeService(
     fun fetchTree(fromNodeId: Int): Stream<TreeNode> {
         logger.info("Get tree from $fromNodeId")
 
-        return streamWithTransaction({ repository.fetchReachableEdges(fromNodeId) }) { stream ->
+        return fetchStreamInTransaction({ repository.fetchReachableEdges(fromNodeId) }) { stream ->
             val edges = stream.iterator()
 
             if (!edges.hasNext()) {
                 throw TreeNotFoundException(fromNodeId)
             }
 
-            edges.foldAllChildEdgesIntoParentNodes(stream)
+            edges.foldAllChildEdgesIntoParentNodes().asStream()
         }
     }
 
-    private fun <T, R> streamWithTransaction(supplier: () -> Stream<T>, use: (Stream<T>) -> Stream<R>): Stream<R> {
-        val tx = transactionManager.getTransaction(DefaultTransactionDefinition().apply { isReadOnly = true })
+    //TODO refactor into separate class
+    private fun <T, R> fetchStreamInTransaction(supplier: () -> Stream<T>, use: (Stream<T>) -> Stream<R>): Stream<R> {
+        val tx = transactionManager.getTransaction(DefaultTransactionDefinition().apply {
+            isReadOnly = true
+            propagationBehavior = TransactionDefinition.PROPAGATION_REQUIRES_NEW
+        })
 
         try {
             return supplier().useClosingOnThrow { stream ->
                 use(stream).onClose {
-                    transactionManager.commit(tx)
+                    stream.close() // delegate closing of the new stream to original source stream
+                    transactionManager.rollback(tx) // we cannot distinguish between commit and rollback here, rollback safer and ok for read-only queries
                 }
             }
         }
@@ -128,32 +134,27 @@ class SupplyChainTreeService(
             }
         }.take(size)
 
-    private fun Iterator<TreeEdge>.foldAllChildEdgesIntoParentNodes(source: AutoCloseable): Stream<TreeNode> =
+    private fun Iterator<TreeEdge>.foldAllChildEdgesIntoParentNodes(): Sequence<TreeNode> =
         sequence {
-            source.use {
-                var e = next()
-                var fromNodeId = e.fromNodeId
-                var toNodeIds = mutableListOf(e.toNodeId)
+            var e = next()
+            var fromNodeId = e.fromNodeId
+            var toNodeIds = mutableListOf(e.toNodeId)
 
-                while (hasNext()) {
-                    e = next()
+            while (hasNext()) {
+                e = next()
 
-                    if (e.fromNodeId == fromNodeId) {
-                        toNodeIds.add(e.toNodeId)
-                    }
-                    else {
-                        // yield node when parent changed -> all child ids present
-                        yield(TreeNode(fromNodeId, toNodeIds))
-                        fromNodeId = e.fromNodeId
-                        toNodeIds = mutableListOf(e.toNodeId)
-                    }
+                if (e.fromNodeId == fromNodeId) {
+                    toNodeIds.add(e.toNodeId)
                 }
-
-                // yield last parent node
-                yield(TreeNode(fromNodeId, toNodeIds))
+                else {
+                    // yield node when parent changed -> all child ids present
+                    yield(TreeNode(fromNodeId, toNodeIds))
+                    fromNodeId = e.fromNodeId
+                    toNodeIds = mutableListOf(e.toNodeId)
+                }
             }
-        }.asStreamClosingAlso(source) // delegate closing of the new stream to original source stream
 
-    private fun <T> Sequence<T>.asStreamClosingAlso(source: AutoCloseable): Stream<T> =
-        asStream().onClose { source.close() }
+            // yield last parent node
+            yield(TreeNode(fromNodeId, toNodeIds))
+        }
 }
