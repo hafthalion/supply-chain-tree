@@ -68,17 +68,17 @@ class SupplyChainTreeServiceTest {
         whenever(transactionManager.getTransaction(any())).thenReturn(SimpleTransactionStatus())
         whenever(transactionManager.commit(any())).then {}
         whenever(repository.fetchReachableEdges(any())).thenReturn(
-            Stream.of(TreeEdge(1, 20), TreeEdge(1, 3), TreeEdge(1, 4), TreeEdge(20, 5), TreeEdge(20, 6), TreeEdge(5, 7))
-        )
+            Stream.of(TreeEdge(1, 20), TreeEdge(1, 3), TreeEdge(1, 4), TreeEdge(20, 5), TreeEdge(20, 6), TreeEdge(5, 7)))
 
         val tree = service.fetchTree(1)
 
         verify(repository).fetchReachableEdges(1)
-        assertThat(tree).hasSize(3).containsExactly(
-            TreeNode(1, listOf(20, 3, 4)),
-            TreeNode(20, listOf(5, 6)),
-            TreeNode(5, listOf(7)),
-        )
+        assertThat(tree).hasSize(3)
+            .containsExactly(
+                TreeNode(1, listOf(20, 3, 4)),
+                TreeNode(20, listOf(5, 6)),
+                TreeNode(5, listOf(7)),
+            )
     }
 
     @Test

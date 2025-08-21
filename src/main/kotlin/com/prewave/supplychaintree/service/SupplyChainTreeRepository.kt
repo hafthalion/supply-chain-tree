@@ -17,21 +17,15 @@ class SupplyChainTreeRepository(
     @Throws(EdgeAlreadyExistsException::class)
     fun createEdge(fromNodeId: Int, toNodeId: Int) {
         try {
-            dsl.insertInto(table("edge"))
-                .set(field("from_id"), fromNodeId)
-                .set(field("to_id"), toNodeId)
-                .execute()
-        } catch (e: DuplicateKeyException) {
+            dsl.insertInto(table("edge")).set(field("from_id"), fromNodeId).set(field("to_id"), toNodeId).execute()
+        }
+        catch (e: DuplicateKeyException) {
             throw EdgeAlreadyExistsException(fromNodeId, toNodeId, e)
         }
     }
 
     fun deleteEdge(fromNodeId: Int, toNodeId: Int): Int {
-        val deletedRows = dsl.deleteFrom(table("edge"))
-            .where(
-                field("from_id").eq(fromNodeId)
-                    .and(field("to_id").eq(toNodeId))
-            ).execute()
+        val deletedRows = dsl.deleteFrom(table("edge")).where(field("from_id").eq(fromNodeId).and(field("to_id").eq(toNodeId))).execute()
 
         return deletedRows
     }
@@ -58,17 +52,11 @@ class SupplyChainTreeRepository(
      */
     fun fetchReachableEdges(fromNodeId: Int): Stream<TreeEdge> {
         return dsl.withRecursive(name("rq"), name("from_id"), name("to_id"))
-            .`as`(
-                select(field("from_id"), field("to_id"))
-                    .from(table("edge"))
-                    .where(field("from_id").eq(fromNodeId))
-                    .unionAll(
-                        select(field(name("e", "from_id")), field(name("e", "to_id")))
-                            .from(name("rq"))
-                            .join(table("edge").`as`("e"))
-                            .on(field(name("rq", "to_id")).eq(field(name("e", "from_id"))))
-                    )
-            )
+            .`as`(select(field("from_id"), field("to_id")).from(table("edge"))
+                .where(field("from_id").eq(fromNodeId))
+                .unionAll(select(field(name("e", "from_id")), field(name("e", "to_id"))).from(name("rq"))
+                    .join(table("edge").`as`("e"))
+                    .on(field(name("rq", "to_id")).eq(field(name("e", "from_id"))))))
             .select()
             .from(name("rq"))
             .fetchSize(batchSize)
@@ -78,20 +66,18 @@ class SupplyChainTreeRepository(
 
     @Throws(EdgeConflictException::class)
     fun createEdges(fromToIdSequence: Sequence<Pair<Int, Int>>) {
-        val insert = dsl.insertInto(table("edge"))
-            .columns(field("from_id"), field("to_id"))
-            .values(0, 0) // param placeholders
+        val insert = dsl.insertInto(table("edge")).columns(field("from_id"), field("to_id")).values(0, 0)
 
-        fromToIdSequence.chunked(batchSize)
-            .forEach { chunk ->
-                try {
-                    val batch = dsl.batch(insert)
-                    chunk.forEach { batch.bind(it.first, it.second) }
-                    batch.execute()
-                } catch (e: DuplicateKeyException) {
-                    throw EdgeConflictException(e)
-                }
+        fromToIdSequence.chunked(batchSize).forEach { chunk ->
+            try {
+                val batch = dsl.batch(insert)
+                chunk.forEach { batch.bind(it.first, it.second) }
+                batch.execute()
             }
+            catch (e: DuplicateKeyException) {
+                throw EdgeConflictException(e)
+            }
+        }
     }
 
     private val batchSize = 1_000

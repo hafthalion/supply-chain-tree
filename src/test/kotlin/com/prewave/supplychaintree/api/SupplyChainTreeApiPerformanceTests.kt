@@ -4,7 +4,6 @@ import com.prewave.supplychaintree.TestcontainersConfiguration
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assumptions.assumeTrue
-import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.RepeatedTest.CURRENT_REPETITION_PLACEHOLDER
 import org.junit.jupiter.api.RepeatedTest.TOTAL_REPETITIONS_PLACEHOLDER
 import org.springframework.beans.factory.annotation.Autowired

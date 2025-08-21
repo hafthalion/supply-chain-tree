@@ -16,7 +16,8 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@SecurityScheme(name = "test-auth", type = SecuritySchemeType.HTTP, scheme = "basic", description = "Basic authentication for test endpoints. Use test/secret during local development.")
+@SecurityScheme(name = "test-auth", type = SecuritySchemeType.HTTP, scheme = "basic",
+    description = "Basic authentication for test endpoints. Use test/secret during local development.")
 @SecurityRequirement(name = "test-auth")
 @Tag(name = "Supply chain tree API for testing", description = "Private test API for performance testing of large trees.")
 @RestController

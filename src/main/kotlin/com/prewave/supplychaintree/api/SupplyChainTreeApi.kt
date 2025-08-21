@@ -15,9 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.*
 import java.util.stream.Stream
 
-@OpenAPIDefinition(
-    info = Info(title = "Supply chain tree API", version = "1.0", summary = "A simple API to manage supply chain tree structure")
-)
+@OpenAPIDefinition(info = Info(title = "Supply chain tree API", version = "1.0", summary = "A simple API to manage supply chain tree structure"))
 @Tag(name = "Supply chain tree API", description = "Public API to manage supply chain tree structure")
 @RestController
 @RequestMapping("/api")
@@ -48,20 +46,17 @@ class SupplyChainTreeApi(
         return service.deleteEdge(fromNodeId, toNodeId)
     }
 
-    @Operation(summary = "Fetch the whole supply chain tree structure",
-        description = """
+    @Operation(summary = "Fetch the whole supply chain tree structure", description = """
 Fetch the whole supply chain tree structure starting with the fromNodeId.
 The node elements are streamed in chunks and in the tree hierarchy order, meaning that node ID references are forward only,
 allowing effective processing on the client side, i.e. processed elements can be forgotten.
-        """
-    )
+        """)
     @ApiResponse(responseCode = "200", description = "Successfully fetched the tree structure",
         content = [Content(mediaType = "application/json", array = ArraySchema(schema = Schema(FetchTreeNode::class)))])
     @ApiResponse(responseCode = "404", description = "The tree with that starting node does not exist",
         content = [Content(mediaType = "application/json", schema = Schema(ErrorResponse::class))])
     @GetMapping("/tree/from/{fromNodeId}")
     fun fetchTree(@PathVariable fromNodeId: Int): Stream<FetchTreeNode> {
-        return service.fetchTree(fromNodeId)
-            .map(::FetchTreeNode)
+        return service.fetchTree(fromNodeId).map(::FetchTreeNode)
     }
 }

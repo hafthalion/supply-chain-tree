@@ -81,8 +81,10 @@ class SupplyChainTreeService(
         try {
             return supplier().useClosingOnThrow { stream ->
                 use(stream).onClose {
-                    stream.close() // delegate closing of the new stream to original source stream
-                    transactionManager.rollback(tx) // we cannot distinguish between commit and rollback here, rollback safer and ok for read-only queries
+                    // delegate closing of the new stream to original source stream
+                    stream.close()
+                    // we cannot distinguish between commit and rollback here, rollback safer and ok for read-only queries
+                    transactionManager.rollback(tx)
                 }
             }
         }
@@ -119,42 +121,39 @@ class SupplyChainTreeService(
         repository.createEdges(fromToIdSequence)
     }
 
-    private fun generateLargeTreeSequence(fromNodeId: Int, size: Int, arity: Int): Sequence<Pair<Int, Int>> =
-        sequence {
-            val nodeIdDeque = ArrayDeque<Int>(size).apply { add(fromNodeId) }
-            var toNodeId = fromNodeId + 1
+    private fun generateLargeTreeSequence(fromNodeId: Int, size: Int, arity: Int): Sequence<Pair<Int, Int>> = sequence {
+        val nodeIdDeque = ArrayDeque<Int>(size).apply { add(fromNodeId) }
+        var toNodeId = fromNodeId + 1
 
-            while (true) {
-                val fromNodeId = nodeIdDeque.removeFirst()
+        while (true) {
+            val fromNodeId = nodeIdDeque.removeFirst()
 
-                repeat(arity) {
-                    yield(fromNodeId to toNodeId) // yield node immediately when created
-                    nodeIdDeque.addLast(toNodeId++) // add current nodeId to the queue to generate its child nodes later
-                }
+            repeat(arity) {
+                yield(fromNodeId to toNodeId) // yield node immediately when created
+                nodeIdDeque.addLast(toNodeId++) // add current nodeId to the queue to generate its child nodes later
             }
-        }.take(size)
-
-    private fun Iterator<TreeEdge>.foldAllChildEdgesIntoParentNodes(): Sequence<TreeNode> =
-        sequence {
-            var e = next()
-            var fromNodeId = e.fromNodeId
-            var toNodeIds = mutableListOf(e.toNodeId)
-
-            while (hasNext()) {
-                e = next()
-
-                if (e.fromNodeId == fromNodeId) {
-                    toNodeIds.add(e.toNodeId)
-                }
-                else {
-                    // yield node when parent changed -> all child ids present
-                    yield(TreeNode(fromNodeId, toNodeIds))
-                    fromNodeId = e.fromNodeId
-                    toNodeIds = mutableListOf(e.toNodeId)
-                }
-            }
-
-            // yield last parent node
-            yield(TreeNode(fromNodeId, toNodeIds))
         }
+    }.take(size)
+
+    private fun Iterator<TreeEdge>.foldAllChildEdgesIntoParentNodes(): Sequence<TreeNode> = sequence {
+        var e = next()
+        var fromNodeId = e.fromNodeId
+        var toNodeIds = mutableListOf(e.toNodeId)
+
+        while (hasNext()) {
+            e = next()
+
+            if (e.fromNodeId == fromNodeId) {
+                toNodeIds.add(e.toNodeId)
+            }
+            else { // yield node when parent changed -> all child ids present
+                yield(TreeNode(fromNodeId, toNodeIds))
+                fromNodeId = e.fromNodeId
+                toNodeIds = mutableListOf(e.toNodeId)
+            }
+        }
+
+        // yield last parent node
+        yield(TreeNode(fromNodeId, toNodeIds))
+    }
 }

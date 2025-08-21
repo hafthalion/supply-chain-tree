@@ -36,10 +36,7 @@ class SupplyChainTreeTestApiSecurity {
 
     @Bean
     fun testUsers(): UserDetailsService {
-        val user = User.withUsername("test")
-            .password("{noop}secret")
-            .roles("TEST")
-            .build()
+        val user = User.withUsername("test").password("{noop}secret").roles("TEST").build()
 
         return InMemoryUserDetailsManager(user)
     }
