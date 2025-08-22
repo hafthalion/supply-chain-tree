@@ -65,13 +65,13 @@ class SupplyChainTreeRepository(
     }
 
     @Throws(EdgeConflictException::class)
-    fun createEdges(fromToIdSequence: Sequence<Pair<Int, Int>>) {
+    fun createEdges(edges: Sequence<TreeEdge>) {
         val insert = dsl.insertInto(table("edge")).columns(field("from_id"), field("to_id")).values(0, 0)
 
-        fromToIdSequence.chunked(batchSize).forEach { chunk ->
+        edges.chunked(batchSize).forEach { chunk ->
             try {
                 val batch = dsl.batch(insert)
-                chunk.forEach { batch.bind(it.first, it.second) }
+                chunk.forEach { batch.bind(it.fromNodeId, it.toNodeId) }
                 batch.execute()
             }
             catch (e: DuplicateKeyException) {

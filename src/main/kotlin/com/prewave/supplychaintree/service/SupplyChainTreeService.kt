@@ -77,12 +77,12 @@ class SupplyChainTreeService(
         logger.info("Generate large tree from $fromNodeId of size $size and arity $arity")
 
         val arityOrDefault = arity ?: max(log10(size.toDouble()).toInt(), 1)
-        val fromToIdSequence = generateLargeTreeSequence(fromNodeId, size, arityOrDefault)
+        val edges = generateLargeTreeSequence(fromNodeId, size, arityOrDefault)
 
-        repository.createEdges(fromToIdSequence)
+        repository.createEdges(edges)
     }
 
-    private fun generateLargeTreeSequence(fromNodeId: Int, size: Int, arity: Int): Sequence<Pair<Int, Int>> = sequence {
+    private fun generateLargeTreeSequence(fromNodeId: Int, size: Int, arity: Int): Sequence<TreeEdge> = sequence {
         val nodeIdDeque = ArrayDeque<Int>(size).apply { add(fromNodeId) }
         var toNodeId = fromNodeId + 1
 
@@ -90,8 +90,10 @@ class SupplyChainTreeService(
             val fromNodeId = nodeIdDeque.removeFirst()
 
             repeat(arity) {
-                yield(fromNodeId to toNodeId) // yield node immediately when created
-                nodeIdDeque.addLast(toNodeId++) // add current nodeId to the queue to generate its child nodes later
+                // yield node immediately when created
+                yield(TreeEdge(fromNodeId, toNodeId))
+                // add current nodeId to the queue to generate its child nodes later
+                nodeIdDeque.addLast(toNodeId++)
             }
         }
     }.take(size)
@@ -107,7 +109,8 @@ class SupplyChainTreeService(
             if (e.fromNodeId == fromNodeId) {
                 toNodeIds.add(e.toNodeId)
             }
-            else { // yield node when parent changed -> all child ids present
+            else {
+                // yield node when parent changed -> all child ids present
                 yield(TreeNode(fromNodeId, toNodeIds))
                 fromNodeId = e.fromNodeId
                 toNodeIds = mutableListOf(e.toNodeId)
