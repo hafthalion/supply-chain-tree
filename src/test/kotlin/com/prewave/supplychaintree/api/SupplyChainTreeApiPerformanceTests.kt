@@ -9,7 +9,7 @@ import org.junit.jupiter.api.RepeatedTest.TOTAL_REPETITIONS_PLACEHOLDER
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
-import org.springframework.boot.test.web.client.TestRestTemplate
+import org.springframework.boot.web.server.test.client.TestRestTemplate
 import org.springframework.context.annotation.Import
 import org.springframework.http.HttpMethod.GET
 import org.springframework.http.HttpMethod.POST
@@ -18,6 +18,7 @@ import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.util.StreamUtils.drain
 import org.springframework.web.client.RequestCallback
 import org.springframework.web.client.ResponseExtractor
+import kotlin.test.assertNotNull
 import kotlin.time.measureTime
 
 /**
@@ -46,6 +47,7 @@ class SupplyChainTreeApiPerformanceTests(
 
         val response = rest.execute("/test/tree/from/100?size={size}", POST, requestCallback, responseExtractor, treeSize)
 
+        assertNotNull(response)
         assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
     }
 
@@ -69,6 +71,7 @@ class SupplyChainTreeApiPerformanceTests(
 
         val response = rest.execute("/api/tree/from/100", GET, requestCallback, responseExtractor)
 
+        assertNotNull(response)
         assertThat(response.first).isEqualTo(HttpStatus.OK)
         assertThat(response.second).isGreaterThan(treeSize * responseSizeFactor)
     }
