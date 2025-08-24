@@ -3,13 +3,13 @@ package com.prewave.supplychaintree.service
 import com.prewave.supplychaintree.domain.TreeEdge
 import com.prewave.supplychaintree.domain.exception.EdgeAlreadyExistsException
 import com.prewave.supplychaintree.domain.exception.EdgeConflictException
+import com.prewave.supplychaintree.jooq.tables.references.EDGE
 import org.jooq.DSLContext
 import org.jooq.impl.DSL.*
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Repository
 import java.util.stream.Stream
 
-//TODO Use jooq generator for type-safe access
 @Repository
 class SupplyChainTreeRepository(
     private val dsl: DSLContext,
@@ -17,7 +17,11 @@ class SupplyChainTreeRepository(
     @Throws(EdgeAlreadyExistsException::class)
     fun createEdge(fromNodeId: Int, toNodeId: Int) {
         try {
-            dsl.insertInto(table("edge")).set(field("from_id"), fromNodeId).set(field("to_id"), toNodeId).execute()
+            dsl.newRecord(EDGE).apply {
+                fromId = fromNodeId
+                toId = toNodeId
+                insert()
+            }
         }
         catch (e: DuplicateKeyException) {
             throw EdgeAlreadyExistsException(fromNodeId, toNodeId, e)
@@ -25,7 +29,7 @@ class SupplyChainTreeRepository(
     }
 
     fun deleteEdge(fromNodeId: Int, toNodeId: Int): Int {
-        val deletedRows = dsl.deleteFrom(table("edge")).where(field("from_id").eq(fromNodeId).and(field("to_id").eq(toNodeId))).execute()
+        val deletedRows = dsl.deleteFrom(EDGE).where(EDGE.FROM_ID.eq(fromNodeId).and(EDGE.TO_ID.eq(toNodeId))).execute()
 
         return deletedRows
     }
@@ -50,6 +54,7 @@ class SupplyChainTreeRepository(
      * SELECT from_id, to_id
      * FROM rq;
      */
+    //TODO Use jooq type-safe access in with query?
     fun fetchReachableEdges(fromNodeId: Int): Stream<TreeEdge> {
         return dsl.withRecursive(name("rq"), name("from_id"), name("to_id"))
             .`as`(select(field("from_id"), field("to_id")).from(table("edge"))
@@ -66,13 +71,14 @@ class SupplyChainTreeRepository(
 
     @Throws(EdgeConflictException::class)
     fun createEdges(edges: Sequence<TreeEdge>) {
-        val insert = dsl.insertInto(table("edge")).columns(field("from_id"), field("to_id")).values(0, 0)
-
         edges.chunked(batchSize).forEach { chunk ->
             try {
-                val batch = dsl.batch(insert)
-                chunk.forEach { batch.bind(it.fromNodeId, it.toNodeId) }
-                batch.execute()
+                dsl.batchInsert(chunk.map {
+                    dsl.newRecord(EDGE).apply {
+                        fromId = it.fromNodeId
+                        toId = it.toNodeId
+                    }
+                }).execute()
             }
             catch (e: DuplicateKeyException) {
                 throw EdgeConflictException(e)
