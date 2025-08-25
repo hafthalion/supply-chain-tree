@@ -17,9 +17,8 @@ import kotlin.streams.asStream
 @ExtendWith(MockitoExtension::class)
 class SupplyChainTreeServiceTest {
     private val repository = mock<SupplyChainTreeRepository>()
-    private val streamFetcher = mock<StreamFetcher>()
 
-    private val service = SupplyChainTreeService(repository, streamFetcher)
+    private val service = SupplyChainTreeService(repository)
 
     @Test
     fun `should create edge in repository`() {
@@ -63,29 +62,26 @@ class SupplyChainTreeServiceTest {
 
     @Test
     fun `should fetch tree structure`() {
-        wheneverFetchingStreamOf<TreeNode>(streamFetcher).thenSimulateStreamFetcher()
         whenever(repository.fetchReachableEdges(any())).thenReturn(
             Stream.of(TreeEdge(1, 20), TreeEdge(1, 3), TreeEdge(1, 4), TreeEdge(20, 5), TreeEdge(20, 6), TreeEdge(5, 7)))
 
-        val tree = service.fetchTree(1)
-
-        verify(streamFetcher).fetchStreamInTransaction<Any, Any>(any(), any())
-        verify(repository).fetchReachableEdges(1)
-        assertThat(tree).hasSize(3)
-            .containsExactly(
-                TreeNode(1, listOf(20, 3, 4)),
-                TreeNode(20, listOf(5, 6)),
-                TreeNode(5, listOf(7)),
-            )
+        service.fetchTree(1) { tree ->
+            verify(repository).fetchReachableEdges(1)
+            assertThat(tree).hasSize(3)
+                .containsExactly(
+                    TreeNode(1, listOf(20, 3, 4)),
+                    TreeNode(20, listOf(5, 6)),
+                    TreeNode(5, listOf(7)),
+                )
+        }
     }
 
     @Test
     fun `should fail when fetching unknown tree`() {
-        wheneverFetchingStreamOf<TreeNode>(streamFetcher).thenSimulateStreamFetcher()
         whenever(repository.fetchReachableEdges(any())).thenReturn(Stream.of())
 
         assertThatThrownBy {
-            service.fetchTree(1)
+            service.fetchTree(1) {}
         }.isInstanceOf(TreeNotFoundException::class.java)
 
         verify(repository).fetchReachableEdges(1)

@@ -20,7 +20,6 @@ import kotlin.streams.asStream
 @Validated
 class SupplyChainTreeService(
     private val repository: SupplyChainTreeRepository,
-    private val streamFetcher: StreamFetcher,
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -44,25 +43,24 @@ class SupplyChainTreeService(
      * Fetches all reachable tree edges from the repository and grouping all child edges to single element per each parent node.
      *
      * For this to work the repository has to return all child edges of any given node in sequence as rows coming directly after each other.
-     * This method implements automatic stream closure after all the elements have been consumed to free the underlying resources without relying on the client.
-     * Also requires and implements manual transaction management for the underlying stream to remain open until fully consumed.
+     * The tree node sequence has to be processed entirely in the consumer function so that underlying stream resources and transaction can be closed properly.
      *
-     * @return A sequence of nodes with child edges
+     * @param fromNodeId Starting node id
+     * @param consumer The consumer function that should process the tree nodes
      */
+    @Transactional
     @Throws(TreeNotFoundException::class)
-    fun fetchTree(fromNodeId: Int): Stream<TreeNode> {
-        logger.info("Get tree from $fromNodeId")
+    fun fetchTree(fromNodeId: Int, consumer: (Stream<TreeNode>) -> Unit) {
+        logger.info("Fetch and stream tree from $fromNodeId")
 
-        val fetchReachableEdges = { repository.fetchReachableEdges(fromNodeId) }
-
-        return streamFetcher.fetchStreamInTransaction(fetchReachableEdges) { stream ->
-            val edges = stream.iterator()
+        repository.fetchReachableEdges(fromNodeId).use {
+            val edges = it.iterator()
 
             if (!edges.hasNext()) {
                 throw TreeNotFoundException(fromNodeId)
             }
 
-            edges.foldAllChildEdgesIntoParentNodes().asStream()
+            consumer(edges.foldAllChildEdgesIntoParentNodes().asStream())
         }
     }
 
