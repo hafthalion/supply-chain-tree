@@ -14,9 +14,11 @@ java {
 }
 
 kotlin {
+    jvmToolchain(21)
     compilerOptions {
         freeCompilerArgs.addAll("-Xjsr305=strict")
     }
+    sourceSets["main"].kotlin.srcDir("src/main/jooq")
 }
 
 configurations {
@@ -81,7 +83,7 @@ jooq {
             }
             target {
                 packageName = "com.prewave.supplychaintree.jooq"
-                directory = "src/main/kotlin"
+                directory = "src/main/jooq"
             }
         }
     }
