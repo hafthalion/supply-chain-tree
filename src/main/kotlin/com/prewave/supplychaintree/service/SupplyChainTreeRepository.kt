@@ -3,7 +3,7 @@ package com.prewave.supplychaintree.service
 import com.prewave.supplychaintree.domain.TreeEdge
 import com.prewave.supplychaintree.domain.exception.EdgeAlreadyExistsException
 import com.prewave.supplychaintree.domain.exception.EdgeConflictException
-import com.prewave.supplychaintree.jooq.tables.references.EDGE
+import com.prewave.supplychaintree.jooq.tables.records.EdgeRecord
 import org.jooq.DSLContext
 import org.jooq.impl.DSL.*
 import org.springframework.dao.DuplicateKeyException
@@ -17,19 +17,25 @@ class SupplyChainTreeRepository(
     @Throws(EdgeAlreadyExistsException::class)
     fun createEdge(fromNodeId: Int, toNodeId: Int) {
         try {
-            dsl.newRecord(EDGE).apply {
-                fromId = fromNodeId
-                toId = toNodeId
-                insert()
-            }
+            dsl.executeInsert(EdgeRecord(fromNodeId, toNodeId))
         }
         catch (e: DuplicateKeyException) {
             throw EdgeAlreadyExistsException(fromNodeId, toNodeId, e)
         }
     }
 
+    @Throws(EdgeConflictException::class)
+    fun createEdges(edges: Sequence<TreeEdge>) {
+        try {
+            edges.map { EdgeRecord(it.fromNodeId, it.toNodeId) }.chunked(batchSize).forEach { dsl.batchInsert(it).execute() }
+        }
+        catch (e: DuplicateKeyException) {
+            throw EdgeConflictException(e)
+        }
+    }
+
     fun deleteEdge(fromNodeId: Int, toNodeId: Int): Int {
-        val deletedRows = dsl.deleteFrom(EDGE).where(EDGE.FROM_ID.eq(fromNodeId).and(EDGE.TO_ID.eq(toNodeId))).execute()
+        val deletedRows  = dsl.executeDelete(EdgeRecord(fromNodeId, toNodeId))
 
         return deletedRows
     }
@@ -67,23 +73,6 @@ class SupplyChainTreeRepository(
             .fetchSize(batchSize)
             .fetchStream()
             .map { TreeEdge(it.getValue(0, Int::class.java), it.getValue(1, Int::class.java)) }
-    }
-
-    @Throws(EdgeConflictException::class)
-    fun createEdges(edges: Sequence<TreeEdge>) {
-        edges.chunked(batchSize).forEach { chunk ->
-            try {
-                dsl.batchInsert(chunk.map {
-                    dsl.newRecord(EDGE).apply {
-                        fromId = it.fromNodeId
-                        toId = it.toNodeId
-                    }
-                }).execute()
-            }
-            catch (e: DuplicateKeyException) {
-                throw EdgeConflictException(e)
-            }
-        }
     }
 
     private val batchSize = 1_000
