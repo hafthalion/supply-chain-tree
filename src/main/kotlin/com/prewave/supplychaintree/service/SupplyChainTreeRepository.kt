@@ -3,6 +3,7 @@ package com.prewave.supplychaintree.service
 import com.prewave.supplychaintree.domain.TreeEdge
 import com.prewave.supplychaintree.domain.exception.EdgeAlreadyExistsException
 import com.prewave.supplychaintree.domain.exception.EdgeConflictException
+import com.prewave.supplychaintree.domain.exception.EdgeNotFoundException
 import com.prewave.supplychaintree.jooq.tables.records.EdgeRecord
 import org.jooq.DSLContext
 import org.jooq.impl.DSL.*
@@ -34,10 +35,11 @@ class SupplyChainTreeRepository(
         }
     }
 
-    fun deleteEdge(fromNodeId: Int, toNodeId: Int): Int {
-        val deletedRows  = dsl.executeDelete(EdgeRecord(fromNodeId, toNodeId))
-
-        return deletedRows
+    @Throws(EdgeNotFoundException::class)
+    fun deleteEdge(fromNodeId: Int, toNodeId: Int) {
+        if (dsl.executeDelete(EdgeRecord(fromNodeId, toNodeId)) == 0) {
+            throw EdgeNotFoundException(fromNodeId, toNodeId)
+        }
     }
 
     /**

@@ -23,7 +23,7 @@ class SupplyChainTreeServiceTest {
 
     @Test
     fun `should create edge in repository`() {
-        doNothing().whenever(repository).createEdge(any(), any())
+        whenever(repository.createEdge(any(), any())).then {}
 
         service.createEdge(1, 2)
 
@@ -43,7 +43,7 @@ class SupplyChainTreeServiceTest {
 
     @Test
     fun `should delete edge from repository`() {
-        whenever(repository.deleteEdge(any(), any())).thenReturn(1)
+        whenever(repository.deleteEdge(any(), any())).then {}
 
         service.deleteEdge(1, 2)
 
@@ -52,7 +52,7 @@ class SupplyChainTreeServiceTest {
 
     @Test
     fun `should fail when deleting unknown edge from repository`() {
-        whenever(repository.deleteEdge(any(), any())).thenReturn(0)
+        whenever(repository.deleteEdge(any(), any())).doThrow(EdgeNotFoundException::class)
 
         assertThatThrownBy {
             service.deleteEdge(1, 2)
@@ -69,7 +69,7 @@ class SupplyChainTreeServiceTest {
 
         val tree = service.fetchTree(1)
 
-//        verify(streamFetcher).fetchStreamInTransaction<Any, Any>(any(), any())
+        verify(streamFetcher).fetchStreamInTransaction<Any, Any>(any(), any())
         verify(repository).fetchReachableEdges(1)
         assertThat(tree).hasSize(3)
             .containsExactly(

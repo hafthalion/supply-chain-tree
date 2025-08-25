@@ -37,11 +37,7 @@ class SupplyChainTreeService(
     fun deleteEdge(fromNodeId: Int, toNodeId: Int) {
         logger.info("Delete edge from $fromNodeId to $toNodeId")
 
-        val deletedRows = repository.deleteEdge(fromNodeId, toNodeId)
-
-        if (deletedRows == 0) {
-            throw EdgeNotFoundException(fromNodeId, toNodeId)
-        }
+        repository.deleteEdge(fromNodeId, toNodeId)
     }
 
     /**
