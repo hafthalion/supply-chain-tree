@@ -81,6 +81,11 @@ jooq {
                 includes = ".*"
                 excludes = "databasechangelog.*"
             }
+            generate {
+                isKotlinNotNullRecordAttributes = true
+                isKotlinNotNullPojoAttributes = true
+                isKotlinNotNullInterfaceAttributes = true
+            }
             target {
                 packageName = "com.prewave.supplychaintree.jooq"
                 directory = "src/main/jooq"

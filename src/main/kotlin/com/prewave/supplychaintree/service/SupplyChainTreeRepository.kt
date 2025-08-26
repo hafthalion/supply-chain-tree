@@ -5,6 +5,7 @@ import com.prewave.supplychaintree.domain.exception.EdgeAlreadyExistsException
 import com.prewave.supplychaintree.domain.exception.EdgeConflictException
 import com.prewave.supplychaintree.domain.exception.EdgeNotFoundException
 import com.prewave.supplychaintree.jooq.tables.records.EdgeRecord
+import com.prewave.supplychaintree.jooq.tables.references.EDGE
 import org.jooq.DSLContext
 import org.jooq.impl.DSL.*
 import org.springframework.dao.DuplicateKeyException
@@ -62,20 +63,21 @@ class SupplyChainTreeRepository(
      * SELECT from_id, to_id
      * FROM rq;
      */
-    //TODO Use jooq type-safe access in with query?
     fun fetchReachableEdges(fromNodeId: Int): Stream<TreeEdge> {
-        return dsl.withRecursive(name("rq"), name("from_id"), name("to_id"))
-            .`as`(select(field("from_id"), field("to_id")).from(table("edge"))
-                .where(field("from_id").eq(fromNodeId))
-                .unionAll(select(field(name("e", "from_id")), field(name("e", "to_id"))).from(name("rq"))
-                    .join(table("edge").`as`("e"))
-                    .on(field(name("rq", "to_id")).eq(field(name("e", "from_id"))))))
-            .select()
-            .from(name("rq"))
+        val rq = name("rq")
+        val cte = rq.fields(EDGE.FROM_ID.name, EDGE.TO_ID.name)
+            .`as`(dsl.select(EDGE.FROM_ID, EDGE.TO_ID)
+                .from(EDGE)
+                .where(EDGE.FROM_ID.eq(fromNodeId))
+                .unionAll(
+                    select(EDGE.FROM_ID, EDGE.TO_ID).from(EDGE).join(rq).on(EDGE.FROM_ID.eq(field(rq.append(EDGE.TO_ID.name), Int::class.java)))))
+
+        return dsl.withRecursive(cte)
+            .selectFrom(cte)
             .fetchSize(batchSize)
-            .fetchStream()
-            .map { TreeEdge(it.getValue(0, Int::class.java), it.getValue(1, Int::class.java)) }
+            .fetchStreamInto(EdgeRecord::class.java)
+            .map { TreeEdge(it.fromId, it.toId) }
     }
 
-    private val batchSize = 1_000
+    private val batchSize = 5_000
 }
