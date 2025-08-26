@@ -2,7 +2,7 @@
 
 spring:
   application:
-    name: SupplyChainTree
+    name: supply-chain-tree
   jooq:
     sql-dialect: POSTGRES
 
