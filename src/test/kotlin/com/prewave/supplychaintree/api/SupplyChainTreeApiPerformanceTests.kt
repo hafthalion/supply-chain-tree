@@ -29,8 +29,8 @@ import kotlin.time.measureTime
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Import(TestcontainersConfiguration::class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class SupplyChainTreeApiPerformanceTests(
-    @param:Autowired val rest: TestRestTemplate,
+class SupplyChainTreeApiPerformanceTests @Autowired constructor(
+    private val rest: TestRestTemplate,
 ) {
     private val treeSize = 100_000
     private val responseTimeMs = 500

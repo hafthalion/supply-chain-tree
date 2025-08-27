@@ -14,11 +14,10 @@ import org.springframework.http.HttpStatus
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Import(TestcontainersConfiguration::class)
-class SupplyChainTreeApiTests(
-    @param:Autowired val rest: TestRestTemplate,
-    @param:Autowired val repository: SupplyChainTreeRepository,
+class SupplyChainTreeApiTests @Autowired constructor(
+    private val rest: TestRestTemplate,
+    private val repository: SupplyChainTreeRepository,
 ) {
-
     @Test
     fun `should create new edge`() {
         val entity = rest.postForEntity("/api/edge/from/10/to/11", null, Any::class.java)
