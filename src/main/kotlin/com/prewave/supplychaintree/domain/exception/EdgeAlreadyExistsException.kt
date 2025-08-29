@@ -1,8 +1,8 @@
 package com.prewave.supplychaintree.domain.exception
 
+import com.prewave.supplychaintree.domain.TreeEdge
 import org.springframework.http.HttpStatus.CONFLICT
-import org.springframework.http.ProblemDetail
-import org.springframework.web.ErrorResponseException
+import org.springframework.web.server.ResponseStatusException
 
-class EdgeAlreadyExistsException(fromId: Int, toId: Int, cause: Exception?) :
-    ErrorResponseException(CONFLICT, ProblemDetail.forStatusAndDetail(CONFLICT, "Tree edge from $fromId to $toId already exists"), cause)
+class EdgeAlreadyExistsException(edge: TreeEdge, cause: Exception) :
+    ResponseStatusException(CONFLICT, "Tree edge from ${edge.fromNodeId} to ${edge.toNodeId} already exists", cause)

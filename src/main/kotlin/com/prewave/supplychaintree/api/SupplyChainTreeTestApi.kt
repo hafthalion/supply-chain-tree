@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.constraints.Min
 import org.springframework.context.annotation.Profile
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "Supply chain tree API for testing", description = "Private test API for performance testing of large trees.")
 @RestController
 @RequestMapping("/test")
+@Validated
 @Profile("default")
 class SupplyChainTreeTestApi(
     private val service: SupplyChainTreeService,
@@ -34,6 +36,6 @@ class SupplyChainTreeTestApi(
         @Parameter @Min(1) size: Int,
         @Parameter @Min(1) arity: Int?,
     ) {
-        service.generateLargeTree(fromNodeId, size, arity)
+        service.generateTree(fromNodeId, size, arity)
     }
 }

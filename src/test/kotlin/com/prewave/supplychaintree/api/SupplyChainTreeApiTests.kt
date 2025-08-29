@@ -1,8 +1,11 @@
 package com.prewave.supplychaintree.api
 
 import com.prewave.supplychaintree.TestcontainersConfiguration
+import com.prewave.supplychaintree.domain.TreeEdge
+import com.prewave.supplychaintree.domain.exception.TreeNotFoundException
 import com.prewave.supplychaintree.service.SupplyChainTreeRepository
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -23,27 +26,29 @@ class SupplyChainTreeApiTests @Autowired constructor(
         val entity = rest.postForEntity("/api/edge/from/10/to/11", null, Any::class.java)
 
         assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(repository.fetchReachableEdges(10)).hasSize(1)
+        assertThat(repository.fetchTree(10).edges).hasSize(1)
     }
 
     @Test
     fun `should not create duplicate edge`() {
-        repository.createEdge(20, 21)
+        repository.createEdge(TreeEdge(20, 21))
 
         val entity = rest.postForEntity("/api/edge/from/20/to/21", null, Any::class.java)
 
         assertThat(entity.statusCode).isEqualTo(HttpStatus.CONFLICT)
-        assertThat(repository.fetchReachableEdges(20)).hasSize(1)
+        assertThat(repository.fetchTree(20).edges).hasSize(1)
     }
 
     @Test
     fun `should delete existing edge`() {
-        repository.createEdge(30, 31)
+        repository.createEdge(TreeEdge(30, 31))
 
         val entity = rest.exchange("/api/edge/from/30/to/31", HttpMethod.DELETE, null, Any::class.java)
 
         assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(repository.fetchReachableEdges(30)).isEmpty()
+        assertThatThrownBy {
+            repository.fetchTree(30)
+        }.isInstanceOf(TreeNotFoundException::class.java)
     }
 
     @Test
@@ -55,15 +60,15 @@ class SupplyChainTreeApiTests @Autowired constructor(
 
     @Test
     fun `should fetch tree`() {
-        repository.createEdge(40, 41)
-        repository.createEdge(40, 42)
-        repository.createEdge(41, 43)
-        repository.createEdge(41, 44)
+        repository.createEdge(TreeEdge(40, 41))
+        repository.createEdge(TreeEdge(40, 42))
+        repository.createEdge(TreeEdge(41, 43))
+        repository.createEdge(TreeEdge(41, 44))
 
-        val entity = rest.getForEntity("/api/tree/from/40", List::class.java)
+        val response = rest.getForEntity("/api/tree/from/40", List::class.java)
 
-        assertThat(entity.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(entity.body).hasSize(2).first()
+        assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        assertThat(response.body).hasSize(2).first()
             .hasFieldOrPropertyWithValue("id", 40)
             .hasFieldOrPropertyWithValue("to", listOf(41, 42))
     }

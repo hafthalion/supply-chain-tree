@@ -1,8 +1,7 @@
 package com.prewave.supplychaintree.domain.exception
 
 import org.springframework.http.HttpStatus.CONFLICT
-import org.springframework.http.ProblemDetail
-import org.springframework.web.ErrorResponseException
+import org.springframework.web.server.ResponseStatusException
 
 class EdgeConflictException(cause: Exception) :
-    ErrorResponseException(CONFLICT, ProblemDetail.forStatusAndDetail(CONFLICT, "An existing edge conflict occurred when generating a tree"), cause)
+    ResponseStatusException(CONFLICT, "A conflict with an unspecified existing edge occurred when creating a tree", cause)

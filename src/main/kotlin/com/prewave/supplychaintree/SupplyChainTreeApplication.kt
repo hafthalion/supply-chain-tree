@@ -1,7 +1,7 @@
 package com.prewave.supplychaintree
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.ObjectWriter
+import com.prewave.supplychaintree.domain.TreeFactory
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
@@ -9,7 +9,10 @@ import org.springframework.context.annotation.Bean
 @SpringBootApplication
 class SupplyChainTreeApplication {
     @Bean
-    fun objectWriter(objectMapper: ObjectMapper): ObjectWriter = objectMapper.writer()
+    fun objectWriter(objectMapper: ObjectMapper) = objectMapper.writer()!!
+
+    @Bean
+    fun treeFactory() = TreeFactory()
 }
 
 fun main(args: Array<String>) {

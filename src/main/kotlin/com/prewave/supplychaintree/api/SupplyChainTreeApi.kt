@@ -65,8 +65,8 @@ allowing effective processing on the client side, i.e. processed elements can be
         val response = ResponseEntity.ok().contentType(APPLICATION_JSON)
 
         return response.body(StreamingResponseBody { output ->
-            service.fetchTree(fromNodeId) { tree ->
-                objectWriter.writeValue(output, tree.map(::FetchTreeNode))
+            service.fetchAndProcessTree(fromNodeId) { nodes ->
+                objectWriter.writeValue(output, nodes.map(::FetchTreeNode))
             }
         })
     }

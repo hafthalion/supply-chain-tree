@@ -16,7 +16,8 @@ java {
 kotlin {
     jvmToolchain(21)
     compilerOptions {
-        freeCompilerArgs.addAll("-Xjsr305=strict")
+        freeCompilerArgs.add("-Xjsr305=strict")
+        freeCompilerArgs.add("-Xcontext-parameters")
     }
     sourceSets["main"].kotlin.srcDir("src/main/jooq")
 }

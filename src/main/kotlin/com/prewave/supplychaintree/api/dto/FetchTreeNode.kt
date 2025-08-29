@@ -12,5 +12,5 @@ data class FetchTreeNode(
     val id: Int,
     val to: List<Int>,
 ) {
-    constructor(node: TreeNode) : this(node.id, node.childIds)
+    constructor(node: TreeNode) : this(node.id, node.children.map { it.toNodeId })
 }
