@@ -18,6 +18,7 @@ kotlin {
     compilerOptions {
         freeCompilerArgs.add("-Xjsr305=strict")
         freeCompilerArgs.add("-Xcontext-parameters")
+        freeCompilerArgs.add("-Xannotation-default-target=param-property")
     }
     sourceSets["main"].kotlin.srcDir("src/main/jooq")
 }
@@ -65,7 +66,7 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-//TODO generate jooq files in a testcontainer and place in relevant source root
+//TODO generate jooq files automatically in testcontainers and place in relevant source root
 jooq {
     configuration {
         jdbc {

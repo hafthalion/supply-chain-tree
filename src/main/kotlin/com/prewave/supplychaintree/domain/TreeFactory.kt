@@ -5,6 +5,9 @@ import kotlin.math.max
 import kotlin.streams.asStream
 
 class TreeFactory {
+    /**
+     * Generate a tree starting with the [rootNodeId] with total tree size of [size] and optionally a given node-child [arity] for testing purposes.
+     */
     fun generateTree(rootNodeId: Int, size: Int, arity: Int? = null): Tree {
         require(size > 0) { "Size must be greater than zero." }
         require(arity == null || arity > 0) { "Arity must be greater than zero." }

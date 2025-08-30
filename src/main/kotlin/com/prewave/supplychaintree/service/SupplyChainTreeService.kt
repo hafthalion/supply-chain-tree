@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.stream.Stream
 
+/**
+ * The business logic entry point service.
+ */
 @Service
 class SupplyChainTreeService(
     private val repository: SupplyChainTreeRepository,
@@ -53,8 +56,8 @@ class SupplyChainTreeService(
 
 
     /**
-     * Generate a large test tree in the repository starting with the [fromNodeId] with total tree size of [size]
-     * and optionally a given node-child [arity].
+     * Generate a tree in the repository starting with the [fromNodeId] with total tree size of [size]
+     * and optionally a given node-child [arity] for testing purposes.
      */
     @Transactional
     @Throws(EdgeConflictException::class)

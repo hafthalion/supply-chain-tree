@@ -17,6 +17,9 @@ import org.springframework.stereotype.Repository
 import java.util.stream.Stream
 import kotlin.streams.asSequence
 
+/**
+ * The repository handling database access for tree/edge persistence.
+ */
 @Repository
 class SupplyChainTreeRepository(
     private val dsl: DSLContext,

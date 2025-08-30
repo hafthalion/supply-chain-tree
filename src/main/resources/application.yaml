@@ -6,7 +6,12 @@ spring:
   jooq:
     sql-dialect: POSTGRES
 
+  profiles:
+    active: default
+
 server:
+  error:
+    include-message: always
   compression:
     enabled: true
     mime-types: application/json

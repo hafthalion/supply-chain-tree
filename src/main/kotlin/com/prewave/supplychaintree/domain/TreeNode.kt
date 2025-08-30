@@ -1,5 +1,8 @@
 package com.prewave.supplychaintree.domain
 
+/**
+ * A single tree node containing all its direct child edges/nodes.
+ */
 @ExposedCopyVisibility
 data class TreeNode private constructor(
     val id: Int,
@@ -12,10 +15,14 @@ data class TreeNode private constructor(
 
     fun addChild(edge: TreeEdge) {
         require(edge.fromNodeId == id) { "Edge $edge not going from this node $id" }
-        _children.add(edge.toNodeId)
+
+        _children.add(edge)
     }
 
-    fun foldChildOrCreateNew(edge: TreeEdge): TreeNodeFold {
+    /**
+     * Fold a child edge into this node when it has the same origin node id, or create a new node with the edge for different origin node id.
+     */
+    fun foldChild(edge: TreeEdge): TreeNodeFold {
         if (edge.fromNodeId == id) {
             addChild(edge)
             return TreeNodeFold(this, false)
@@ -28,5 +35,5 @@ data class TreeNode private constructor(
 
 data class TreeNodeFold(
     val node: TreeNode,
-    val parentChanged: Boolean,
+    val nodeChanged: Boolean,
 )

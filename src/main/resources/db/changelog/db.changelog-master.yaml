@@ -1,3 +1,4 @@
+# Liquibase database schema change file
 databaseChangeLog:
   - changeSet:
       id: 1

@@ -29,9 +29,9 @@ To run and test the service locally you can follow these steps:
 1. Go to the project directory (ideally in Git Bash)
 2. Run the start script: [`./run`](./run)
 3. Open the service API UI: [Open API docs](http://localhost:8080/swagger-ui/index.html)
-4. Optionally create a large test tree using: [/test/tree/from/{fromNodeId}](http://localhost:8080/swagger-ui/index.html#/Supply%20chain%20tree%20API%20for%20testing/generateLargeTestTree)
+4. Optionally create a large test tree using [/test/tree/from/{fromNodeId}](http://localhost:8080/swagger-ui/index.html#/Supply%20chain%20tree%20API%20for%20testing/generateLargeTestTree) during local development using default profile. 
 
-For large trees use command line instead of UI to avoid browser freezes:
+For fetching large trees use command line instead of UI to avoid browser freezes:
 ```shell
 curl -X 'GET' 'http://localhost:8080/api/tree/from/1' -H 'accept: application/json'
 ```
@@ -52,7 +52,8 @@ The fetching of all reachable edges from the database a recursive SQL query with
 
 Error handling is done using exceptions and leveraging the Spring framework to convert them into standard meaningful error responses.
 
-A test API was added to easily generate a large tree structure for performance testing. This test API is meant to be behind an authorization check. For this Spring Security can be used.
+A test API was added to easily generate a large tree structure for performance testing. This test API is meant to be behind an authorization check. For this Spring Security is be used. 
+The test API is only accessible in default profile during local development.
 
 ## Requirements
 

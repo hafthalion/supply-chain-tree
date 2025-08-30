@@ -30,7 +30,7 @@ class SupplyChainTreeApi(
     @Operation(summary = "Create new supply chain tree edge")
     @ApiResponse(responseCode = "200", description = "Successfully created the tree edge", content = [Content()])
     @ApiResponse(responseCode = "409", description = "The tree edge already exists",
-        content = [Content(mediaType = "application/json", schema = Schema(ErrorResponse::class))])
+        content = [Content(mediaType = APPLICATION_JSON_VALUE, schema = Schema(ErrorResponse::class))])
     @PostMapping("/edge/from/{fromNodeId}/to/{toNodeId}")
     fun createEdge(
         @PathVariable @Parameter fromNodeId: Int,
@@ -42,7 +42,7 @@ class SupplyChainTreeApi(
     @Operation(summary = "Delete an existing supply chain tree edge")
     @ApiResponse(responseCode = "200", description = "Successfully deleted the tree edge", content = [Content()])
     @ApiResponse(responseCode = "404", description = "The tree edge does not exist",
-        content = [Content(mediaType = "application/json", schema = Schema(ErrorResponse::class))])
+        content = [Content(mediaType = APPLICATION_JSON_VALUE, schema = Schema(ErrorResponse::class))])
     @DeleteMapping("/edge/from/{fromNodeId}/to/{toNodeId}")
     fun deleteEdge(
         @PathVariable fromNodeId: Int,
@@ -57,9 +57,9 @@ The node elements are streamed in chunks and in the tree hierarchy order, meanin
 allowing effective processing on the client side, i.e. processed elements can be forgotten.
         """)
     @ApiResponse(responseCode = "200", description = "Successfully fetched the tree structure",
-        content = [Content(mediaType = "application/json", array = ArraySchema(schema = Schema(FetchTreeNode::class)))])
+        content = [Content(mediaType = APPLICATION_JSON_VALUE, array = ArraySchema(schema = Schema(FetchTreeNode::class)))])
     @ApiResponse(responseCode = "404", description = "The tree with that starting node does not exist",
-        content = [Content(mediaType = "application/json", schema = Schema(ErrorResponse::class))])
+        content = [Content(mediaType = APPLICATION_JSON_VALUE, schema = Schema(ErrorResponse::class))])
     @GetMapping("/tree/from/{fromNodeId}")
     fun fetchTree(@PathVariable fromNodeId: Int): ResponseEntity<StreamingResponseBody> {
         val response = ResponseEntity.ok().contentType(APPLICATION_JSON)

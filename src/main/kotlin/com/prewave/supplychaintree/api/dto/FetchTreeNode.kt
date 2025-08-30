@@ -9,7 +9,9 @@ import io.swagger.v3.oas.annotations.media.Schema
  */
 @Schema(description = "One element in the tree structure stream representing the edges from one node to all child nodes")
 data class FetchTreeNode(
+    @Schema(description = "ID of this node")
     val id: Int,
+    @Schema(description = "IDs of all direct child nodes")
     val to: List<Int>,
 ) {
     constructor(node: TreeNode) : this(node.id, node.children.map { it.toNodeId })
