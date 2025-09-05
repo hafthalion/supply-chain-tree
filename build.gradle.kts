@@ -6,7 +6,7 @@ plugins {
     id("org.jooq.jooq-codegen-gradle") version "3.19.25"
 }
 
-group = "com.prewave"
+group = "com.hafnium"
 version = "1.0-SNAPSHOT"
 
 java {
@@ -89,7 +89,7 @@ jooq {
                 isKotlinNotNullInterfaceAttributes = true
             }
             target {
-                packageName = "com.prewave.supplychaintree.jooq"
+                packageName = "com.hafnium.supplychaintree.jooq"
                 directory = "src/main/jooq"
             }
         }

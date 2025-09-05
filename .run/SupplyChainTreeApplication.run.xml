@@ -12,7 +12,7 @@
     <selectedOptions>
       <option name="environmentVariables" />
     </selectedOptions>
-    <option name="SPRING_BOOT_MAIN_CLASS" value="com.prewave.supplychaintree.SupplyChainTreeApplication" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.hafnium.supplychaintree.SupplyChainTreeApplication" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

@@ -42,7 +42,7 @@ Optionally change or add a config/profile for non-local environments in [`./conf
 
 ## Design decisions
 
-[REST API endpoints](src/main/kotlin/com/prewave/supplychaintree/api/SupplyChainTreeApi.kt) adhere to the restful principles where appropriate HTTP methods are used, incl. GET, POST, DELETE. For edge creation the POST method was chosen instead of PUT because of the requirement on the error response, which makes the endpoint not idempotent.
+[REST API endpoints](src/main/kotlin/com/hafnium/supplychaintree/api/SupplyChainTreeApi.kt) adhere to the restful principles where appropriate HTTP methods are used, incl. GET, POST, DELETE. For edge creation the POST method was chosen instead of PUT because of the requirement on the error response, which makes the endpoint not idempotent.
 
 Some mandatory API parameters were placed directly into the path for the edges and tree to be able to act as an HTTP resource and easier handling.
 
