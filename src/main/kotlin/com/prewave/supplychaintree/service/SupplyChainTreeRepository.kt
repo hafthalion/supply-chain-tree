@@ -9,8 +9,13 @@ import com.prewave.supplychaintree.domain.exception.TreeNotFoundException
 import com.prewave.supplychaintree.jooq.tables.records.EdgeRecord
 import com.prewave.supplychaintree.jooq.tables.references.EDGE
 import org.jooq.DSLContext
+import org.jooq.impl.DSL.any
+import org.jooq.impl.DSL.array
+import org.jooq.impl.DSL.arrayAppend
+import org.jooq.impl.DSL.falseCondition
 import org.jooq.impl.DSL.field
 import org.jooq.impl.DSL.name
+import org.jooq.impl.DSL.not
 import org.jooq.impl.DSL.select
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Repository
@@ -102,6 +107,46 @@ class SupplyChainTreeRepository(
             .fetchStreamInto(EdgeRecord::class.java)
             .map { it.toTreeEdge() }
     }
+
+    private fun fetchReachableEdgesDistinct(fromNodeId: Int): Stream<TreeEdge> {
+        val rq = name("rq")
+        val cte = rq.fields(EDGE.FROM_ID.name, EDGE.TO_ID.name)
+            .`as`(dsl.select(EDGE.FROM_ID, EDGE.TO_ID)
+                .from(EDGE)
+                .where(EDGE.FROM_ID.eq(fromNodeId))
+                .union(
+                    select(EDGE.FROM_ID, EDGE.TO_ID)
+                        .from(EDGE)
+                        .join(rq)
+                        .on(EDGE.FROM_ID.eq(field(rq.append(EDGE.TO_ID.name), Int::class.java)))))
+
+        return dsl.withRecursive(cte)
+            .selectFrom(cte)
+            .fetchSize(batchSize)
+            .fetchStreamInto(EdgeRecord::class.java)
+            .map { it.toTreeEdge() }
+    }
+
+    private fun fetchReachableEdgesNoCycle(fromNodeId: Int): Stream<TreeEdge> {
+        val rq = name("rq")
+        val rqPath = field(rq.append("path"), Array<Int>::class.java)
+        val cte = rq.fields(EDGE.FROM_ID.unqualifiedName, EDGE.TO_ID.unqualifiedName, name("path"), name("cycle"))
+            .`as`(dsl.select(EDGE.FROM_ID, EDGE.TO_ID, array(EDGE.FROM_ID), falseCondition())
+                .from(EDGE)
+                .where(EDGE.FROM_ID.eq(fromNodeId))
+                .unionAll(
+                    select(EDGE.FROM_ID, EDGE.TO_ID, arrayAppend(rqPath, EDGE.FROM_ID), EDGE.TO_ID.eq(any(rqPath)))
+                        .from(EDGE).join(rq).on(EDGE.FROM_ID.eq(field(rq.append(EDGE.TO_ID.name), Int::class.java)))
+                        .where(not(field(rq.append("cycle"), Boolean::class.java)))
+                ))
+
+        return dsl.withRecursive(cte)
+            .select(field(rq.append(EDGE.FROM_ID.unqualifiedName)), field(rq.append(EDGE.TO_ID.unqualifiedName))).from(cte)
+            .fetchSize(batchSize)
+            .fetchStreamInto(EdgeRecord::class.java)
+            .map { it.toTreeEdge() }
+    }
+
 
     private val batchSize = 5_000
 
